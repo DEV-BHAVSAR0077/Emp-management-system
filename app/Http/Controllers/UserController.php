@@ -16,7 +16,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search', '');
-        $perPage = 2;
+        $perPage = 8;
 
         $users = User::query()
             ->when($search, function ($query, $search) {
