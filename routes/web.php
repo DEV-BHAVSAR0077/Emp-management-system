@@ -50,9 +50,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/users', [UserController::class, 'store'])
          ->name('users.store');
 
-    // Fetch single user as JSON (for edit modal)
+    // Create a new user page
+    Route::get('/users/create', [UserController::class, 'create'])
+         ->name('users.create');
+
+    // Fetch single user as JSON (for old edit modal, leaving it for now if needed, or remove)
     Route::get('/users/{user}', [UserController::class, 'show'])
          ->name('users.show');
+
+    // Edit a user page
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])
+         ->name('users.edit');
 
     // Update a user (own profile for regular users; any user for admin/HR)
     Route::put('/users/{user}', [UserController::class, 'update'])

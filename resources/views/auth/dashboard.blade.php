@@ -52,13 +52,19 @@
         .navbar {
             background: var(--card-bg);
             border-bottom: 1px solid var(--border);
-            padding: .9rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: stretch; /* Make items take full height so borders align */
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        .navbar .nav-left {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
         }
 
         .navbar .brand {
@@ -66,11 +72,13 @@
             font-weight: 600;
             color: var(--text);
             text-decoration: none;
+            padding: 1rem 0;
         }
 
         .navbar .nav-right {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 1rem;
         }
 
@@ -149,6 +157,40 @@
             background: var(--warn-bg);
             color: var(--warn);
             border-color: var(--warn-border);
+        }
+
+        /* ── Page Header & Tabs ───────────────────────────────────── */
+        .tabs {
+            display: flex;
+            gap: 1.5rem;
+            align-items: stretch;
+        }
+        .nav-tab-btn {
+            padding: 0 0.25rem;
+            background: none;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+            outline: none;
+            display: flex;
+            align-items: center;
+        }
+        .nav-tab-btn:hover { color: var(--text); border-bottom-color: #d1d5db; }
+        .nav-tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fade-in 0.2s ease; }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* ── Users Panel ──────────────────────────────────────────── */
@@ -531,8 +573,19 @@
 <body>
 
 {{-- Navigation bar --}}
+@php
+    $empTabActive = request('search') || request('page') || request('tab') === 'emp';
+@endphp
 <nav class="navbar">
-    <span class="brand">{{ config('app.name', 'MyApp') }}</span>
+    <div class="nav-left">
+        <span class="brand">{{ config('app.name', 'MyApp') }}</span>
+    </div>
+    
+    <div class="tabs">
+        <button class="nav-tab-btn {{ $empTabActive ? '' : 'active' }}" onclick="switchTab('dashboard-tab', this)">Dashboard</button>
+        <button class="nav-tab-btn {{ $empTabActive ? 'active' : '' }}" onclick="switchTab('emp-tab', this)">Emp</button>
+    </div>
+    
     <div class="nav-right">
         <span class="nav-user">
             {{ $user->email }}
@@ -569,23 +622,28 @@
         </div>
     @endif
 
-    {{-- Welcome card --}}
-    <div class="dash-card">
-        <h1>Welcome, {{ $user->name }}! 👋</h1>
-        <p>
-            You are logged in as <strong>{{ $user->email }}</strong>.
-            @if($user->isAdmin())
-                You have <strong>Admin</strong> access — full control over all users and roles.
-            @elseif($user->isHr())
-                You have <strong>HR</strong> access — you can add, edit, and delete users.
-            @else
-                You can view all users and edit your own profile.
-            @endif
-        </p>
+    {{-- Dashboard Tab Content --}}
+    <div id="dashboard-tab" class="tab-content {{ $empTabActive ? '' : 'active' }}">
+        {{-- Welcome card --}}
+        <div class="dash-card">
+            <h1>Welcome, {{ $user->name }}! 👋</h1>
+            <p>
+                You are logged in as <strong>{{ $user->email }}</strong>.
+                @if($user->isAdmin())
+                    You have <strong>Admin</strong> access — full control over all users and roles.
+                @elseif($user->isHr())
+                    You have <strong>HR</strong> access — you can add, edit, and delete users.
+                @else
+                    You can view all users and edit your own profile.
+                @endif
+            </p>
+        </div>
     </div>
 
-    {{-- Users Panel --}}
-    <div class="panel">
+    {{-- Emp Tab Content --}}
+    <div id="emp-tab" class="tab-content {{ $empTabActive ? 'active' : '' }}">
+        {{-- Users Panel --}}
+        <div class="panel">
         <div class="panel-header">
             <h2>All Users
                 <span class="badge" style="margin-left:.5rem; font-size:.72rem;">{{ $users->total() }}</span>
@@ -593,6 +651,7 @@
             <div class="panel-actions">
                 {{-- Search --}}
                 <form method="GET" action="{{ route('dashboard') }}" class="search-form" id="form-search">
+                    <input type="hidden" name="tab" value="emp" />
                     <input
                         type="text"
                         name="search"
@@ -603,16 +662,16 @@
                         autocomplete="off"
                     />
                     @if ($search)
-                        <a href="{{ route('dashboard') }}" class="btn btn-ghost btn-sm" id="btn-clear-search" title="Clear search">✕</a>
+                        <a href="{{ route('dashboard', ['tab' => 'emp']) }}" class="btn btn-ghost btn-sm" id="btn-clear-search" title="Clear search">✕</a>
                     @endif
                     <button type="submit" class="btn btn-ghost btn-sm" id="btn-search">Search</button>
                 </form>
 
                 {{-- Add User — only Admin/HR --}}
                 @if($user->canManageUsers())
-                <button class="btn btn-primary btn-sm" id="btn-open-create" onclick="openCreateModal()">
+                <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm" id="btn-open-create">
                     Add User
-                </button>
+                </a>
                 @endif
             </div>
         </div>
@@ -678,10 +737,10 @@
                                     - Regular user: can only edit their own row
                                 --}}
                                 @if($user->canManageUsers() || $u->id === Auth::id())
-                                <button
+                                <a
+                                    href="{{ route('users.edit', $u) }}"
                                     class="btn btn-edit btn-sm"
                                     id="btn-edit-{{ $u->id }}"
-                                    onclick="openEditModal({{ $u->id }}, '{{ addslashes($u->name) }}', '{{ addslashes($u->email) }}', '{{ $u->role }}')"
                                     title="Edit user"
                                 >
                                     <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/></svg>
@@ -690,7 +749,7 @@
                                     @else
                                         Edit
                                     @endif
-                                </button>
+                                </a>
                                 @endif
 
                                 {{--
@@ -767,175 +826,9 @@
         </div>
         @endif
     </div>{{-- /.panel --}}
+    </div>{{-- /.emp-tab --}}
 
 </div>{{-- /.main --}}
-
-{{-- ════════════════════════════════════════════════════════════════
-     CREATE USER MODAL — only rendered for admin/HR
-     ════════════════════════════════════════════════════════════════ --}}
-@if($user->canManageUsers())
-<div class="modal-backdrop" id="modal-create" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
-    <div class="modal">
-        <div class="modal-title">
-            <span id="modal-create-title">Add New User</span>
-            <button class="modal-close" onclick="closeModal('modal-create')" aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
-            </button>
-        </div>
-
-        <form method="POST" action="{{ route('users.store') }}" id="form-create-user" novalidate>
-            @csrf
-
-            <div class="form-group">
-                <label for="create_name">Full Name</label>
-                <input type="text" id="create_name" name="name" placeholder="John Doe"
-                    value="{{ old('name') }}"
-                    class="{{ $errors->has('name') ? 'input-error' : '' }}" required />
-                @error('name')
-                    <span class="field-error">
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V4h1.5v4.5z"/></svg>
-                        {{ $message }}
-                    </span>
-                @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="create_email">Email Address</label>
-                <input type="email" id="create_email" name="email" placeholder="you@example.com"
-                    value="{{ old('email') }}"
-                    class="{{ $errors->has('email') ? 'input-error' : '' }}" required />
-                @error('email')
-                    <span class="field-error">
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V4h1.5v4.5z"/></svg>
-                        {{ $message }}
-                    </span>
-                @enderror
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="create_password">Password</label>
-                    <input type="password" id="create_password" name="password"
-                        placeholder="Min. 8 characters"
-                        class="{{ $errors->has('password') ? 'input-error' : '' }}" required />
-                    @error('password')
-                        <span class="field-error">
-                            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V4h1.5v4.5z"/></svg>
-                            {{ $message }}
-                        </span>
-                    @enderror
-                </div>
-                <div class="form-group">
-                    <label for="create_password_confirmation">Confirm Password</label>
-                    <input type="password" id="create_password_confirmation"
-                        name="password_confirmation" placeholder="Repeat password" required />
-                </div>
-            </div>
-
-            {{-- Role selector — only admin sees this --}}
-            @if($user->isAdmin())
-            <div class="form-group">
-                <label for="create_role">Role</label>
-                <select id="create_role" name="role">
-                    <option value="user" {{ old('role', 'user') === 'user' ? 'selected' : '' }}>User</option>
-                    <option value="hr"   {{ old('role') === 'hr'    ? 'selected' : '' }}>HR</option>
-                    <option value="admin"{{ old('role') === 'admin'  ? 'selected' : '' }}>Admin</option>
-                </select>
-                @error('role')
-                    <span class="field-error">{{ $message }}</span>
-                @enderror
-            </div>
-            @endif
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-create')">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="btn-create-submit">Create User</button>
-            </div>
-        </form>
-    </div>
-</div>
-@endif
-
-{{-- ════════════════════════════════════════════════════════════════
-     EDIT USER MODAL
-     ════════════════════════════════════════════════════════════════ --}}
-<div class="modal-backdrop" id="modal-edit" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
-    <div class="modal">
-        <div class="modal-title">
-            <span id="modal-edit-title">Edit User</span>
-            <button class="modal-close" onclick="closeModal('modal-edit')" aria-label="Close">
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
-            </button>
-        </div>
-
-        <form method="POST" action="" id="form-edit-user" novalidate>
-            @csrf
-            @method('PUT')
-
-            <div class="form-group">
-                <label for="edit_name">Full Name</label>
-                <input type="text" id="edit_name" name="name" placeholder="John Doe" required />
-                @error('name')
-                    <span class="field-error">
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V4h1.5v4.5z"/></svg>
-                        {{ $message }}
-                    </span>
-                @enderror
-            </div>
-
-            <div class="form-group">
-                <label for="edit_email">Email Address</label>
-                <input type="email" id="edit_email" name="email" placeholder="you@example.com" required />
-                @error('email')
-                    <span class="field-error">
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V4h1.5v4.5z"/></svg>
-                        {{ $message }}
-                    </span>
-                @enderror
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="edit_password">New Password</label>
-                    <input type="password" id="edit_password" name="password" placeholder="Leave blank to keep" />
-                    <span class="field-hint">Leave empty to keep current password.</span>
-                    @error('password')
-                        <span class="field-error">
-                            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm.75 10.5h-1.5v-1.5h1.5v1.5zm0-3h-1.5V4h1.5v4.5z"/></svg>
-                            {{ $message }}
-                        </span>
-                    @enderror
-                </div>
-                <div class="form-group">
-                    <label for="edit_password_confirmation">Confirm Password</label>
-                    <input type="password" id="edit_password_confirmation"
-                        name="password_confirmation" placeholder="Repeat new password" />
-                </div>
-            </div>
-
-            {{-- Role selector — only visible to admin --}}
-            @if($user->isAdmin())
-            <div class="form-group" id="edit-role-group">
-                <label for="edit_role">Role</label>
-                <select id="edit_role" name="role">
-                    <option value="user">User</option>
-                    <option value="hr">HR</option>
-                    <option value="admin">Admin</option>
-                </select>
-                @error('role')
-                    <span class="field-error">{{ $message }}</span>
-                @enderror
-                <span class="field-hint">Changing role grants or revokes management permissions.</span>
-            </div>
-            @endif
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-edit')">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="btn-edit-submit">Save Changes</button>
-            </div>
-        </form>
-    </div>
-</div>
 
 {{-- ════════════════════════════════════════════════════════════════
      DELETE CONFIRM MODAL — only rendered for admin/HR
@@ -990,47 +883,32 @@
         }
     });
 
-    // ── Create modal ─────────────────────────────────────────────────────
-    function openCreateModal() {
-        openModal('modal-create');
-        setTimeout(function() { document.getElementById('create_name').focus(); }, 50);
-    }
-
-    // ── Edit modal ───────────────────────────────────────────────────────
-    function openEditModal(id, name, email, role) {
-        document.getElementById('edit_name').value  = name;
-        document.getElementById('edit_email').value = email;
-        document.getElementById('edit_password').value = '';
-        document.getElementById('edit_password_confirmation').value = '';
-
-        // Set role if the selector exists (admin only)
-        var roleSelect = document.getElementById('edit_role');
-        if (roleSelect) {
-            roleSelect.value = role || 'user';
-        }
-
-        var form = document.getElementById('form-edit-user');
-        form.action = '/users/' + id;
-
-        openModal('modal-edit');
-        setTimeout(function() { document.getElementById('edit_name').focus(); }, 50);
-    }
-
-    // ── Delete modal ─────────────────────────────────────────────────────
     function openDeleteModal(id, name) {
         document.getElementById('delete-user-name').textContent = name;
         document.getElementById('form-delete-user').action = '/users/' + id;
         openModal('modal-delete');
     }
 
-    // ── Auto-open modals on validation error (after POST redirect) ───────
-    @if($errors->any() && old('_method') === 'PUT')
-        openModal('modal-edit');
-    @elseif($errors->any() && !old('_method'))
-        @if($user->canManageUsers())
-            openModal('modal-create');
-        @endif
-    @endif
+    // ── Tabs logic ───────────────────────────────────────────────────────
+    function switchTab(tabId, btnElement) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(function(content) {
+            content.classList.remove('active');
+        });
+        // Remove active class from buttons
+        document.querySelectorAll('.nav-tab-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+
+        // Show target tab and set button active
+        document.getElementById(tabId).classList.add('active');
+        btnElement.classList.add('active');
+
+        // Optional: Remove search/page from URL if switching away from Emp tab to make it cleaner
+        if (tabId === 'dashboard-tab' && window.location.search) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
 </script>
 
 </body>

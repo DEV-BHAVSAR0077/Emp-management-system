@@ -61,7 +61,39 @@ class UserController extends Controller
     }
 
     /**
-     * Return a single user as JSON (for the edit modal).
+     * Show the form for creating a new user.
+     */
+    public function create()
+    {
+        if (! Auth::user()->canManageUsers()) {
+            abort(403, 'You are not authorized to create users.');
+        }
+
+        return view('employees.create_user', [
+            'user' => Auth::user(),
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified user.
+     */
+    public function edit(User $user)
+    {
+        $authUser = Auth::user();
+
+        // Regular users may only edit themselves
+        if (! $authUser->canManageUsers() && $authUser->id !== $user->id) {
+            abort(403, 'You are not authorized to edit other users.');
+        }
+
+        return view('employees.edit_user', [
+            'user' => $authUser,
+            'editUser' => $user,
+        ]);
+    }
+    
+    /**
+     * Return a single user as JSON (for the old edit modal).
      */
     public function show(User $user)
     {
