@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,12 +11,11 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /**
-     * Display the dashboard with paginated user list.
-     */
+    //Display the dashboard with paginated user list.
+     
     public function index(Request $request)
     {
-        $search = $request->input('search', '');
+        $search  = $request->input('search', '');
         $perPage = 8;
 
         $users = User::query()
@@ -26,17 +26,19 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
+        $roles    = Role::orderBy('name')->get();
+        $rolesMap = $roles->keyBy('name'); // keyed by role name for easy badge lookup
+
         return view('auth.dashboard', [
-            'user'   => Auth::user(),
-            'users'  => $users,
-            'search' => $search,
+            'user'     => Auth::user(),
+            'users'    => $users,
+            'search'   => $search,
+            'roles'    => $roles,
+            'rolesMap' => $rolesMap,
         ]);
     }
 
-    /**
-     * Store a newly created user.
-     * Only admin/HR may create users from the dashboard.
-     */
+    // Store a newly created user.
     public function store(UpdateUserRequest $request)
     {
         if (! Auth::user()->canManageUsers()) {
@@ -47,6 +49,7 @@ class UserController extends Controller
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
+            'role'     => 'User', // default
         ];
 
         // Admin may set role on creation
@@ -56,27 +59,30 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('dashboard', ['tab' => 'emp'])
                          ->with('success', 'User created successfully.');
     }
 
-    /**
-     * Show the form for creating a new user.
-     */
+    //Show the form for creating a new user.
+     
     public function create()
     {
         if (! Auth::user()->canManageUsers()) {
             abort(403, 'You are not authorized to create users.');
         }
 
+        $roles = Role::orderBy('name')->get();
+
         return view('employees.create_user', [
-            'user' => Auth::user(),
+            'user'     => Auth::user(),
+            'roles'    => $roles,
+            'rolesMap' => $roles->keyBy('name'),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified user.
-     */
+    //Show the form for editing the specified user.
+     
+     
     public function edit(User $user)
     {
         $authUser = Auth::user();
@@ -86,34 +92,18 @@ class UserController extends Controller
             abort(403, 'You are not authorized to edit other users.');
         }
 
+        $roles = Role::orderBy('name')->get();
+
         return view('employees.edit_user', [
-            'user' => $authUser,
+            'user'     => $authUser,
             'editUser' => $user,
-        ]);
-    }
-    
-    /**
-     * Return a single user as JSON (for the old edit modal).
-     */
-    public function show(User $user)
-    {
-        return response()->json([
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'role'  => $user->role,
+            'roles'    => $roles,
+            'rolesMap' => $roles->keyBy('name'),
         ]);
     }
 
-    /**
-     * Update an existing user.
-     *
-     * Permission rules:
-     *  - Admin/HR  → can update any user's name, email, password.
-     *  - Admin only → can also change role.
-     *  - Regular user → can only update their OWN profile (name, email, password).
-     *  - Regular user editing someone else → 403.
-     */
+
+    // Update an existing user.
     public function update(UpdateUserRequest $request, User $user)
     {
         $authUser = Auth::user();
@@ -134,24 +124,24 @@ class UserController extends Controller
 
         // Only admin can change role
         if ($authUser->isAdmin() && $request->filled('role')) {
-            // Prevent the last admin from demoting themselves
-            if ($user->id === $authUser->id && $request->role !== 'admin') {
-                return redirect()->route('dashboard')
-                                 ->with('error', 'You cannot demote your own admin account.');
+            // Prevent admin from demoting themselves
+            if ($user->id === $authUser->id) {
+                $newLevel = Role::where('name', $request->role)->value('level');
+                if ($newLevel !== 'admin') {
+                    return redirect()->route('dashboard')
+                                     ->with('error', 'You cannot remove admin access from your own account.');
+                }
             }
             $data['role'] = $request->role;
         }
 
         $user->update($data);
 
-        return redirect()->route('dashboard')
+        return redirect()->route('dashboard', ['tab' => 'emp'])
                          ->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Delete a user.
-     * Only admin/HR may delete; self-delete is prevented.
-     */
+    // Delete a user.
     public function destroy(User $user)
     {
         $authUser = Auth::user();

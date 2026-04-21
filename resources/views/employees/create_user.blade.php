@@ -52,7 +52,7 @@
         }
 
         .navbar .nav-right {
-            display: flex;
+            display: flex;  
             align-items: center;
             gap: 1rem;
         }
@@ -163,7 +163,7 @@
             @endif
 
             <div class="form-actions">
-                <a href="{{ route('dashboard', ['tab' => 'emp']) }}" class="btn btn-ghost">Cancel</a>
+                <a href="{{ route('dashboard') }}" class="btn btn-ghost">Cancel</a>
                 <button type="submit" class="btn btn-primary">Create User</button>
             </div>
         </form>

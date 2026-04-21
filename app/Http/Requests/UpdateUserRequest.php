@@ -46,7 +46,9 @@ class UpdateUserRequest extends FormRequest
 
         // Role field — only validated if sent by an admin
         if (Auth::check() && Auth::user()->isAdmin()) {
-            $rules['role'] = ['nullable', Rule::in(['user', 'hr', 'admin'])];
+            // Pull valid role names dynamically from the roles table
+            $validRoles = \App\Models\Role::pluck('name')->toArray();
+            $rules['role'] = ['nullable', Rule::in($validRoles)];
         }
 
         return $rules;
