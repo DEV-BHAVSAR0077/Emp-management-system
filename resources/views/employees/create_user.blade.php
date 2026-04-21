@@ -110,11 +110,14 @@
     <a href="{{ route('dashboard') }}" class="brand">{{ config('app.name', 'MyApp') }}</a>
     <div class="nav-right">
         <span style="font-size: .84rem; color: var(--text-muted); display: flex; align-items: center; gap: .45rem;">
+            @php
+                $myRoleObj   = $roles->firstWhere('name', $user->role);
+                $myRoleColor = $myRoleObj?->color ?? '#374151';
+            @endphp
             {{ $user->email }}
-            @if($user->isAdmin()) <span class="role-pill role-pill-admin">Admin</span>
-            @elseif($user->isHr()) <span class="role-pill role-pill-hr">HR</span>
-            @else <span class="role-pill role-pill-user">User</span>
-            @endif
+            <span class="role-pill" style="background:{{ $myRoleColor }}20; color:{{ $myRoleColor }}; border:1px solid {{ $myRoleColor }}40;">
+                {{ $user->role }}
+            </span>
         </span>
         <a href="{{ route('dashboard') }}" class="btn btn-ghost" style="padding: .3rem .6rem;">Back to Dashboard</a>
     </div>
@@ -154,9 +157,12 @@
             <div class="form-group">
                 <label for="role">Role</label>
                 <select id="role" name="role">
-                    <option value="user" {{ old('role', 'user') === 'user' ? 'selected' : '' }}>User</option>
-                    <option value="hr"   {{ old('role') === 'hr'    ? 'selected' : '' }}>HR</option>
-                    <option value="admin"{{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                    @foreach($roles as $r)
+                        <option value="{{ $r->name }}"
+                            {{ old('role', 'User') === $r->name ? 'selected' : '' }}>
+                            {{ $r->name }}
+                        </option>
+                    @endforeach
                 </select>
                 @error('role')<span class="field-error">{{ $message }}</span>@enderror
             </div>
