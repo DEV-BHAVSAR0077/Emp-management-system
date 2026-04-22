@@ -23,8 +23,6 @@
     <div class="roles-grid" id="roles-grid">
         @php
             $roleIcons   = ['🛡️','👑','🔑','⚡','🌟','🎯','💼','🔒','🌐','🎖️','🚀','💡'];
-            $levelLabels = ['admin' => 'Admin Access', 'hr' => 'HR Access', 'user' => 'Standard Access'];
-            $levelColors = ['admin' => '#b45309',      'hr' => '#6d28d9',   'user' => '#374151'];
             $idx = 0;
         @endphp
 
@@ -33,8 +31,6 @@
             $icon        = $roleIcons[$idx % count($roleIcons)];
             $idx++;
             $cardColor   = $role->color ?: '#374151';
-            $levelLabel  = $levelLabels[$role->level] ?? 'Standard Access';
-            $levelColor  = $levelColors[$role->level] ?? '#374151';
             $isProtected = strtolower($role->name) === 'admin';
         @endphp
         <div class="role-card" id="role-card-{{ $role->id }}">
@@ -44,9 +40,6 @@
                     <div class="role-card-icon" style="background: {{ $cardColor }}22; color: {{ $cardColor }}; margin-bottom:0;">
                         {{ $icon }}
                     </div>
-                    <span style="font-size:.7rem; font-weight:600; padding:.2rem .5rem; border-radius:99px; background:{{ $levelColor }}18; color:{{ $levelColor }}; border:1px solid {{ $levelColor }}30; text-transform:uppercase; letter-spacing:.04em;">
-                        {{ $levelLabel }}
-                    </span>
                 </div>
                 <div class="role-card-name">{{ $role->name }}</div>
                 <div class="role-card-desc">{{ $role->description ?: 'No description provided.' }}</div>
