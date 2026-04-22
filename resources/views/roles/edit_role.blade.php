@@ -73,7 +73,7 @@
             margin-bottom: .38rem;
             color: var(--text);
         }
-        .form-group input,
+        .form-group input:not([type="hidden"]):not([type="checkbox"]),
         .form-group select,
         .form-group textarea {
             width: 100%;
@@ -88,7 +88,7 @@
             transition: border-color .18s, box-shadow .18s;
         }
         .form-group textarea { resize: vertical; min-height: 80px; }
-        .form-group input:focus,
+        .form-group input:not([type="hidden"]):not([type="checkbox"]):focus,
         .form-group select:focus,
         .form-group textarea:focus {
             border-color: #9ca3af;
@@ -99,6 +99,37 @@
 
         .field-error { display: flex; align-items: center; gap: .32rem; font-size: .78rem; color: var(--danger); margin-top: .35rem; }
         .field-hint  { font-size: .76rem; color: var(--text-muted); margin-top: .28rem; }
+
+        /* ── Permissions Scrollable List ──────────────────────────── */
+        .permissions-scroll {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: .8rem 1rem;
+            background: var(--bg);
+        }
+        .permissions-scroll label {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: .5rem;
+            font-weight: 400;
+            font-size: .88rem;
+            cursor: pointer;
+            color: var(--text);
+            padding: .2rem 0;
+        }
+        .permissions-scroll label:last-child {
+            margin-bottom: 0;
+        }
+        .permissions-scroll input[type="checkbox"] {
+            width: 1.1rem;
+            height: 1.1rem;
+            accent-color: #2563eb;
+            cursor: pointer;
+            margin: 0;
+        }
 
         /* ── Color swatches ───────────────────────────────────────── */
         .color-swatches { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
@@ -242,7 +273,7 @@
         @if($isProtected)
         <div class="notice">
             <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd"/></svg>
-            This is a system role. You can update its color and description, but the name and permission level are locked.
+            This is a system role. You can update its color and description, but the name is locked.
         </div>
         @endif
 
@@ -292,19 +323,19 @@
             </div>
 
             <div class="form-group">
-                <label for="level">Permission Level <span style="color:var(--danger);">*</span></label>
-                <select id="level" name="level" {{ $isProtected ? 'disabled' : '' }}
-                    style="{{ $isProtected ? 'background:var(--bg); color:var(--text-muted); cursor:not-allowed;' : '' }}">
-                    <option value="user"  {{ old('level', $role->level) === 'user'  ? 'selected' : '' }}>Standard (User)  — view only, edit own profile</option>
-                    <option value="hr"    {{ old('level', $role->level) === 'hr'    ? 'selected' : '' }}>HR              — can add, edit &amp; delete users</option>
-                    <option value="admin" {{ old('level', $role->level) === 'admin' ? 'selected' : '' }}>Admin           — full access including roles</option>
-                </select>
-                {{-- Hidden field to preserve level value when select is disabled --}}
-                @if($isProtected)
-                <input type="hidden" name="level" value="{{ $role->level }}" />
-                @endif
-                <span class="field-hint">Controls what actions users with this role can perform.</span>
-                @error('level')<span class="field-error">{{ $message }}</span>@enderror
+                <label>Permissions</label>
+                <div class="permissions-scroll">
+                    @foreach($permissions as $permission)
+                        <label>
+                            <input type="checkbox"
+                                name="permissions[]"
+                                value="{{ $permission->id }}"
+                                data-name="{{ $permission->name }}"
+                                {{ $role->permissions->contains($permission->id) ? 'checked' : '' }}>
+                            {{ $permission->display_name }}
+                        </label>
+                    @endforeach
+                </div>
             </div>
 
             <div class="form-group">
@@ -407,6 +438,46 @@
 
     renderSwatches();
     updatePreview(selectedColor);
+
+    // Permission constraints logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][name="permissions[]"]');
+        const getCheckbox = (nameVal) => Array.from(checkboxes).find(c => c.dataset.name === nameVal);
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const pName = this.dataset.name;
+
+                // Checking create/edit/delete automatically checks 'view'
+                if (this.checked) {
+                    if (['create-user', 'edit-user', 'delete-user'].includes(pName)) {
+                        const v = getCheckbox('view-user');
+                        if(v) v.checked = true;
+                    }
+                    if (['create-role', 'edit-role', 'delete-role'].includes(pName)) {
+                        const v = getCheckbox('view-role');
+                        if(v) v.checked = true;
+                    }
+                }
+
+                // Unchecking 'view' automatically unchecks create/edit/delete
+                if (!this.checked) {
+                    if (pName === 'view-user') {
+                        ['create-user', 'edit-user', 'delete-user'].forEach(n => {
+                            const c = getCheckbox(n);
+                            if(c) c.checked = false;
+                        });
+                    }
+                    if (pName === 'view-role') {
+                        ['create-role', 'edit-role', 'delete-role'].forEach(n => {
+                            const c = getCheckbox(n);
+                            if(c) c.checked = false;
+                        });
+                    }
+                }
+            });
+        });
+    });
 </script>
 
 </body>

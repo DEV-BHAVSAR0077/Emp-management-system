@@ -1,6 +1,6 @@
 {{-- Roles Tab --}}
 
-@if($user->isAdmin())
+@can('view-role')
 <div id="roles-tab" class="tab-content {{ $rolesTabActive ? 'active' : '' }}">
 
     {{-- ── Header ──────────────────────────────────────────────────── --}}
@@ -12,10 +12,12 @@
             Roles Management
             <span class="badge" style="font-size:.72rem;">{{ $roles->count() }}</span>
         </h2>
+        @can('create-role')
         <a href="{{ route('roles.create') }}" class="btn btn-primary btn-sm" id="btn-create-role">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
             New Role
         </a>
+        @endcan
     </div>
 
     {{-- ── Role Cards Grid ─────────────────────────────────────────── --}}
@@ -46,6 +48,8 @@
             </div>
             <div class="role-card-footer">
                 {{-- Edit button → goes to edit page --}}
+                @can('edit-role')
+                {{-- Edit button → goes to edit page --}}
                 <a
                     href="{{ route('roles.edit', $role) }}"
                     class="btn btn-edit btn-sm"
@@ -55,10 +59,12 @@
                     <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/></svg>
                     Edit
                 </a>
+                @endcan
 
                 @if($isProtected)
                 <span style="font-size:.72rem; color:var(--text-muted); padding:.3rem .5rem;">🔒 System</span>
                 @else
+                @can('delete-role')
                 {{-- Delete form (inline, no modal needed here — confirm on edit page) --}}
                 <form method="POST" action="{{ route('roles.destroy', $role) }}" id="form-del-role-{{ $role->id }}"
                       onsubmit="return confirm('Delete role \'{{ addslashes($role->name) }}\'? All assigned users will be reset to User.')">
@@ -69,21 +75,22 @@
                         Delete
                     </button>
                 </form>
+                @endcan
                 @endif
             </div>
         </div>
         @endforeach
     </div>
-
     @else
     <div class="roles-empty">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
             <path d="M12 2L3.5 6.5v5c0 5.25 3.75 10.15 8.5 11.5C16.75 21.65 20.5 16.75 20.5 11.5v-5L12 2z"/>
         </svg>
         <h3>No roles yet</h3>
+        @can('create-role')
         <p>Click <strong>New Role</strong> to create your first role.</p>
+        @endcan
     </div>
     @endif
-
 </div>{{-- /.roles-tab --}}
-@endif
+@endcan

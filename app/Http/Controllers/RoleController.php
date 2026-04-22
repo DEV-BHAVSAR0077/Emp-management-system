@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
@@ -15,84 +17,89 @@ class RoleController extends Controller
 
     //Show the Create Role page.
      
-    public function create()
-    {
-        if (! Auth::user()->isAdmin()) {
-            abort(403, 'Only admins can manage roles.');
-        }
+    // public function create()
+    // {
+    //     if (! Auth::user()->isAdmin()) {
+    //         abort(403, 'Only admins can manage roles.');
+    //     }
 
-        return view('roles.create_role', [
-            'user' => Auth::user(),
-            'roles' => Role::orderBy('name')->get(),
-        ]);
-    }
+    //     return view('roles.create_role', [
+    //         'user' => Auth::user(),
+    //         'roles' => Role::orderBy('name')->get(),
+    //     ]);
+    // }
 
     // Store a newly created role.
     public function store(Request $request)
     {
-        if (! Auth::user()->isAdmin()) {
-            abort(403, 'Only admins can manage roles.');
-        }
+        Gate::authorize('create-role');
 
-        $validated = $request->validate([
-            'name'        => ['required', 'string', 'max:50', 'unique:roles,name'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'color'       => ['required', 'string', 'max:20'],
-            'level'       => ['required', Rule::in(['admin', 'hr', 'user'])],
+        $request->validate([
+            'name' => 'required|unique:roles,name',
+            'description' => 'nullable|max:255',
+            'color' => 'required'
         ]);
 
-        Role::create($validated);
+        $role = Role::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'color' => $request->color,
+        ]);
+
+        $role->permissions()->attach($request->permissions ?? []);
 
         return redirect()->route('dashboard', ['tab' => 'roles'])
-                         ->with('success', 'Role "' . $validated['name'] . '" created successfully.');
+            ->with('success', 'Role Created Successfully');
     }
 
     //Show the Edit Role page.
      
     public function edit(Role $role)
     {
-        if (! Auth::user()->isAdmin()) {
-            abort(403, 'Only admins can manage roles.');
-        }
+        Gate::authorize('edit-role');
 
-        return view('roles.edit_role', [
-            'user'  => Auth::user(),
-            'role'  => $role,
-            'roles' => Role::orderBy('name')->get(),
-        ]);
+        $permissions = Permission::all();
+        $roles = Role::orderBy('name')->get();
+        $user = Auth::user();
+
+        return view('roles.edit_role', compact('role', 'permissions', 'roles', 'user'));
     }
 
     // Update an existing role.
     public function update(Request $request, Role $role)
     {
-        if (! Auth::user()->isAdmin()) {
-            abort(403, 'Only admins can manage roles.');
-        }
+        Gate::authorize('edit-role');
 
-        $validated = $request->validate([
-            'name'        => ['required', 'string', 'max:50', Rule::unique('roles', 'name')->ignore($role->id)],
-            'description' => ['nullable', 'string', 'max:255'],
-            'color'       => ['required', 'string', 'max:20'],
-            'level'       => ['required', Rule::in(['admin', 'hr', 'user'])],
+        $request->validate([
+            'name' => 'required|unique:roles,name,' . $role->id,
+            'description' => 'nullable|max:255',
+            'color' => 'required',
         ]);
 
-        // If the role name changed, propagate to all users who had the old name
-        if ($role->name !== $validated['name']) {
-            User::where('role', $role->name)->update(['role' => $validated['name']]);
+        $oldName = $role->name;
+
+        $role->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'color' => $request->color,
+        ]);
+
+        if ($oldName !== $request->name) {
+            User::where('role', $oldName)->update([
+                'role' => $request->name
+            ]);
         }
 
-        $role->update($validated);
+        $role->permissions()->sync($request->permissions ?? []);
 
         return redirect()->route('dashboard', ['tab' => 'roles'])
-                         ->with('success', 'Role "' . $validated['name'] . '" updated successfully.');
+            ->with('success', 'Role Updated Successfully');
     }
 
     // Delete a role and reset affected users to 'User'.
     public function destroy(Role $role)
     {
-        if (! Auth::user()->isAdmin()) {
-            abort(403, 'Only admins can manage roles.');
-        }
+        Gate::authorize('delete-role');
 
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
             return redirect()->route('dashboard', ['tab' => 'roles'])
@@ -112,5 +119,19 @@ class RoleController extends Controller
 
         return redirect()->route('dashboard', ['tab' => 'roles'])
                          ->with('success', $msg);
+    }
+
+    public function create()
+    {
+        Gate::authorize('create-role');
+        $permissions = Permission::all();
+        $roles = Role::orderBy('name')->get();
+        $user = Auth::user();
+
+        return view('roles.create_role', compact(
+            'permissions',
+            'roles',
+            'user'
+        ));
     }
 }

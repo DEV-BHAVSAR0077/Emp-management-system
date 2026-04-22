@@ -153,7 +153,7 @@
                 </div>
             </div>
 
-            @if($user->isAdmin())
+            @can('edit-role')
             <div class="form-group">
                 <label for="role">Role</label>
                 <select id="role" name="role">
@@ -166,7 +166,7 @@
                 </select>
                 @error('role')<span class="field-error">{{ $message }}</span>@enderror
             </div>
-            @endif
+            @endcan
 
             <div class="form-actions">
                 <a href="{{ route('dashboard') }}" class="btn btn-ghost">Cancel</a>

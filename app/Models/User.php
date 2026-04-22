@@ -45,18 +45,13 @@ class User extends Authenticatable
     }
 
     // Permission helpers ────────────────────────────────────────────────
-    public function getPermissionLevel(): string
+
+    /**
+     * The normalised role key for this user (lowercase role name).
+     * 'Admin' → 'admin', 'HR' → 'hr', anything else → 'user'
+     */
+    public function getRoleKey(): string
     {
-        // Use DB role level if available
-        if ($this->relationLoaded('roleInfo') && $this->roleInfo) {
-            return $this->roleInfo->level;
-        }
-        // Lazy-load from DB
-        $role = Role::where('name', $this->role)->first();
-        if ($role) {
-            return $role->level;
-        }
-        // Final fallback: match old lowercase role strings
         return match (strtolower($this->role)) {
             'admin' => 'admin',
             'hr'    => 'hr',
@@ -64,21 +59,11 @@ class User extends Authenticatable
         };
     }
 
-    /** Is this user an admin? */
-    public function isAdmin(): bool
-    {
-        return $this->getPermissionLevel() === 'admin';
-    }
 
-    // Is this user an HR?
-    public function isHr(): bool
-    {
-        return $this->getPermissionLevel() === 'hr';
-    }
 
-    // Can this user manage other users (add, edit, delete)? Both admin-level and hr-level roles can manage users.
-    public function canManageUsers(): bool
+    public function hasPermission($permission)
     {
-        return in_array($this->getPermissionLevel(), ['admin', 'hr'], true);
+        return $this->roleInfo &&
+            $this->roleInfo->permissions->contains('name', $permission);
     }
 }

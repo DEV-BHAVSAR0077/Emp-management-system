@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -15,6 +16,7 @@ class UserController extends Controller
      
     public function index(Request $request)
     {
+
         $search  = $request->input('search', '');
         $perPage = 8;
 
@@ -41,9 +43,7 @@ class UserController extends Controller
     // Store a newly created user.
     public function store(UpdateUserRequest $request)
     {
-        if (! Auth::user()->canManageUsers()) {
-            abort(403, 'You are not authorized to create users.');
-        }
+        Gate::authorize('create-user');
 
         $data = [
             'name'     => $request->name,
@@ -52,8 +52,8 @@ class UserController extends Controller
             'role'     => 'User', // default
         ];
 
-        // Admin may set role on creation
-        if (Auth::user()->isAdmin() && $request->filled('role')) {
+        // Admin / User with edit-role may set role on creation
+        if (Auth::user()->hasPermission('edit-role') && $request->filled('role')) {
             $data['role'] = $request->role;
         }
 
@@ -67,9 +67,7 @@ class UserController extends Controller
      
     public function create()
     {
-        if (! Auth::user()->canManageUsers()) {
-            abort(403, 'You are not authorized to create users.');
-        }
+        Gate::authorize('create-user');
 
         $roles = Role::orderBy('name')->get();
 
@@ -88,8 +86,8 @@ class UserController extends Controller
         $authUser = Auth::user();
 
         // Regular users may only edit themselves
-        if (! $authUser->canManageUsers() && $authUser->id !== $user->id) {
-            abort(403, 'You are not authorized to edit other users.');
+        if ($authUser->id !== $user->id) {
+            Gate::authorize('edit-user');
         }
 
         $roles = Role::orderBy('name')->get();
@@ -109,8 +107,8 @@ class UserController extends Controller
         $authUser = Auth::user();
 
         // Regular users may only edit themselves
-        if (! $authUser->canManageUsers() && $authUser->id !== $user->id) {
-            abort(403, 'You are not authorized to edit other users.');
+        if ($authUser->id !== $user->id) {
+            Gate::authorize('edit-user');
         }
 
         $data = [
@@ -122,12 +120,11 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // Only admin can change role
-        if ($authUser->isAdmin() && $request->filled('role')) {
+        // Only users with edit-role permission can change a user's role
+        if ($authUser->hasPermission('edit-role') && $request->filled('role')) {
             // Prevent admin from demoting themselves
             if ($user->id === $authUser->id) {
-                $newLevel = Role::where('name', $request->role)->value('level');
-                if ($newLevel !== 'admin') {
+                if (strtolower($request->role) !== 'admin') {
                     return redirect()->route('dashboard')
                                      ->with('error', 'You cannot remove admin access from your own account.');
                 }
@@ -146,9 +143,7 @@ class UserController extends Controller
     {
         $authUser = Auth::user();
 
-        if (! $authUser->canManageUsers()) {
-            abort(403, 'You are not authorized to delete users.');
-        }
+        Gate::authorize('delete-user');
 
         if ($user->id === $authUser->id) {
             return redirect()->route('dashboard')

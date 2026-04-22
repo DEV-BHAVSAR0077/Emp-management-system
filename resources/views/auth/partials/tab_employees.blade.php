@@ -25,13 +25,13 @@
                     <button type="submit" class="btn btn-ghost btn-sm" id="btn-search">Search</button>
                 </form>
 
-                {{-- Add User — only Admin/HR --}}
-                @if($user->canManageUsers())
+                {{-- Add User --}}
+                @can('create-user')
                 <a href="{{ route('users.create') }}" class="btn btn-primary btn-sm" id="btn-open-create">
                     <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
                     Add User
                 </a>
-                @endif
+                @endcan
             </div>
         </div>
 
@@ -89,7 +89,7 @@
                         <td style="color:var(--text-muted);">{{ $u->updated_at->format('d M Y') }}</td>
                         <td>
                             <div class="actions-cell" style="justify-content:center;">
-                                @if($user->canManageUsers() || $u->id === Auth::id())
+                                @if($user->hasPermission('edit-user') || $u->id === Auth::id())
                                 <a
                                     href="{{ route('users.edit', $u) }}"
                                     class="btn btn-edit btn-sm"
@@ -97,7 +97,7 @@
                                     title="Edit user"
                                 >
                                     <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/></svg>
-                                    @if($u->id === Auth::id() && !$user->canManageUsers())
+                                    @if($u->id === Auth::id() && !$user->hasPermission('edit-user'))
                                         Edit Profile
                                     @else
                                         Edit
@@ -105,7 +105,7 @@
                                 </a>
                                 @endif
 
-                                @if($user->canManageUsers() && $u->id !== Auth::id())
+                                @if($user->hasPermission('delete-user') && $u->id !== Auth::id())
                                 <form method="POST" action="{{ route('users.destroy', $u) }}" id="form-del-user-{{ $u->id }}" style="display:inline;"
                                       onsubmit="return confirm('Are you sure you want to delete user \'{{ addslashes($u->name) }}\'? This action cannot be undone.')">
                                     @csrf
@@ -117,7 +117,7 @@
                                 </form>
                                 @endif
 
-                                @if(!$user->canManageUsers() && $u->id !== Auth::id())
+                                @if(!$user->hasPermission('edit-user') && !$user->hasPermission('delete-user') && $u->id !== Auth::id())
                                     <span style="font-size:.75rem; color:var(--text-muted);">—</span>
                                 @endif
                             </div>

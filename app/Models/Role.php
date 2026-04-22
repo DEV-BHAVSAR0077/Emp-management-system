@@ -13,6 +13,11 @@ class Role extends Model
         'name',
         'description',
         'color',
-        'level',   // 'admin' | 'hr' | 'user' — defines what permissions this role gets
+        'is_protected',
     ];
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class);
+    }
 }
