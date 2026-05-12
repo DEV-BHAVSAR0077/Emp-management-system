@@ -58,6 +58,11 @@ class RoleController extends Controller
     {
         Gate::authorize('edit-role');
 
+        if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
+            return redirect()->route('dashboard', ['tab' => 'roles'])
+                             ->with('error', 'The "' . $role->name . '" role is a system role and cannot be edited.');
+        }
+
         $permissions = Permission::all();
         $roles = Role::orderBy('name')->get();
         $user = Auth::user();
@@ -69,6 +74,11 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         Gate::authorize('edit-role');
+
+        if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
+            return redirect()->route('dashboard', ['tab' => 'roles'])
+                             ->with('error', 'The "' . $role->name . '" role is a system role and cannot be edited.');
+        }
 
         $request->validate([
             'name' => 'required|unique:roles,name,' . $role->id,

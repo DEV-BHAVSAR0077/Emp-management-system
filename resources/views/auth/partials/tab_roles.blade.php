@@ -47,9 +47,11 @@
                 <div class="role-card-desc">{{ $role->description ?: 'No description provided.' }}</div>
             </div>
             <div class="role-card-footer">
+                @if($isProtected)
+                <span style="font-size:.72rem; color:var(--text-muted); padding:.3rem .5rem;">🔒 System</span>
+                @else
                 {{-- Edit button → goes to edit page --}}
                 @can('edit-role')
-                {{-- Edit button → goes to edit page --}}
                 <a
                     href="{{ route('roles.edit', $role) }}"
                     class="btn btn-edit btn-sm"
@@ -61,9 +63,6 @@
                 </a>
                 @endcan
 
-                @if($isProtected)
-                <span style="font-size:.72rem; color:var(--text-muted); padding:.3rem .5rem;">🔒 System</span>
-                @else
                 @can('delete-role')
                 {{-- Delete form (inline, no modal needed here — confirm on edit page) --}}
                 <form method="POST" action="{{ route('roles.destroy', $role) }}" id="form-del-role-{{ $role->id }}"
