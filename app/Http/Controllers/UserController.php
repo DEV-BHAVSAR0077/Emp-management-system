@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Expense;
+use App\Models\ExpenseCategory;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -31,12 +33,34 @@ class UserController extends Controller
         $roles    = Role::orderBy('name')->get();
         $rolesMap = $roles->keyBy('name'); // keyed by role name for easy badge lookup
 
+        // ── Expense data for the expenses tab ─────────────────────────────────
+        $expenseSearch = $request->input('expense_search', '');
+        $expenseStatus = $request->input('expense_status', 'active');
+
+        $expenses = Expense::with(['category', 'subCategory', 'user'])
+            ->when($expenseStatus === 'trashed', function ($query) {
+                $query->onlyTrashed();
+            })
+            ->when($expenseSearch, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('expense_date', 'desc')
+            ->paginate(10, ['*'], 'expense_page');
+
+        $expenseCategories = ExpenseCategory::with('subCategories')
+            ->orderBy('name')
+            ->get();
+
         return view('auth.dashboard', [
-            'user'     => Auth::user(),
-            'users'    => $users,
-            'search'   => $search,
-            'roles'    => $roles,
-            'rolesMap' => $rolesMap,
+            'user'              => Auth::user(),
+            'users'             => $users,
+            'search'            => $search,
+            'roles'             => $roles,
+            'rolesMap'          => $rolesMap,
+            'expenses'          => $expenses,
+            'expenseSearch'     => $expenseSearch,
+            'expenseStatus'     => $expenseStatus,
+            'expenseCategories' => $expenseCategories,
         ]);
     }
 

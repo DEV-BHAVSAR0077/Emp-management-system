@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', config('app.name'))</title>
     <meta name="description" content="Manage all registered users and roles from your dashboard." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -294,6 +295,70 @@
             margin: 0 auto 1rem;
         }
         .confirm-footer { display: flex; justify-content: center; gap: .6rem; margin-top: 1.25rem; }
+        /* ── Expense Module ───────────────────────────────────────── */
+        .expense-amount { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .amount-symbol  { font-size: .82em; color: var(--text-muted); margin-right: .1rem; }
+
+        /* ── Category Section ────────────────────────────────────── */
+        .cat-section { margin-bottom: .2rem; }
+
+        .cat-field-row {
+            display: flex; align-items: center; gap: .4rem;
+        }
+        .cat-field-row select { flex: 1; }
+
+        .cat-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px; border-radius: 6px;
+            border: 1px solid var(--border); background: var(--card-bg);
+            cursor: pointer; transition: all .15s; flex-shrink: 0;
+            color: var(--text-muted);
+        }
+        .cat-btn:hover { background: var(--bg); color: var(--text); }
+        .cat-btn-add:hover  { border-color: #93c5fd; color: var(--info); background: var(--info-bg); }
+        .cat-btn-remove:hover { border-color: var(--danger-border); color: var(--danger); background: var(--danger-bg); }
+
+        .cat-inline-form {
+            margin: .6rem 0 1rem; padding: .85rem 1rem;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: var(--radius); border-left: 3px solid var(--info);
+        }
+        .cat-inline-form.cat-inline-child {
+            margin-left: 1.25rem; border-left-color: #7c3aed;
+        }
+
+        .cat-inline-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: .6rem; flex-wrap: wrap; gap: .4rem;
+        }
+        .cat-inline-title {
+            font-size: .82rem; font-weight: 600; color: var(--text);
+            display: flex; align-items: center; gap: .3rem;
+        }
+        .cat-inline-parent-label {
+            font-size: .75rem; color: var(--text-muted);
+        }
+        .cat-inline-parent-label strong { color: var(--text); }
+
+        .cat-inline-body {
+            display: flex; align-items: flex-end; gap: .5rem; flex-wrap: wrap;
+        }
+        .cat-inline-fields { flex: 1; min-width: 160px; }
+        .cat-inline-input {
+            width: 100%; padding: .45rem .7rem; font-size: .85rem; font-family: inherit;
+            border: 1px solid var(--border); border-radius: 6px;
+            background: var(--card-bg); color: var(--text); outline: none;
+            transition: border-color .18s, box-shadow .18s;
+        }
+        .cat-inline-input:focus { border-color: #9ca3af; box-shadow: 0 0 0 3px rgba(156,163,175,.15); }
+
+        .cat-inline-actions { display: flex; gap: .35rem; flex-shrink: 0; }
+
+        .cat-inline-feedback {
+            margin-top: .4rem; font-size: .78rem; min-height: 1.1em;
+        }
+        .cat-inline-feedback.success { color: var(--success); }
+        .cat-inline-feedback.error   { color: var(--danger); }
     </style>
 </head>
 <body>

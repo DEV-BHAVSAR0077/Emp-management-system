@@ -1,0 +1,59 @@
+@extends('layouts.app')
+
+@section('title', 'Add Expense — ' . config('app.name'))
+@section('main-class', 'main-narrow')
+
+@section('content')
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Add New Expense</h2>
+            <div class="panel-actions">
+                <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
+            </div>
+        </div>
+        <div class="panel-body">
+            <form method="POST" action="{{ route('expenses.store') }}" novalidate>
+                @csrf
+
+                <div class="form-group">
+                    <label for="name">Expense Name <span style="color:var(--danger);">*</span></label>
+                    <input type="text" id="name" name="name" placeholder="e.g. Office Supplies, Travel Reimbursement…" value="{{ old('name') }}" class="{{ $errors->has('name') ? 'input-error' : '' }}" required />
+                    @error('name')<span class="field-error">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="amount">Amount (₹) <span style="color:var(--danger);">*</span></label>
+                        <input type="number" id="amount" name="amount" placeholder="0.00" step="0.01" min="0.01" value="{{ old('amount') }}" class="{{ $errors->has('amount') ? 'input-error' : '' }}" required />
+                        @error('amount')<span class="field-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="expense_date">Date <span style="color:var(--danger);">*</span></label>
+                        <input type="date" id="expense_date" name="expense_date" value="{{ old('expense_date', date('Y-m-d')) }}" class="{{ $errors->has('expense_date') ? 'input-error' : '' }}" required />
+                        @error('expense_date')<span class="field-error">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+
+                @include('expenses.partials.category_section', [
+                    'categories'          => $categories,
+                    'selectedCategory'    => old('expense_category_id'),
+                    'selectedSubCategory' => old('expense_sub_category_id'),
+                ])
+
+                <div class="form-group">
+                    <label for="note">Note</label>
+                    <textarea id="note" name="note" placeholder="Optional details about this expense…" maxlength="1000">{{ old('note') }}</textarea>
+                    @error('note')<span class="field-error">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-actions">
+                    <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-primary" id="btn-create-expense">
+                        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
+                        Create Expense
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

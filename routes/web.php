@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -82,4 +84,42 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
          ->name('roles.destroy');
+
+    // ── Expense CRUD (permission-gated in controller) ─────────────────────
+    Route::get('/expenses', [ExpenseController::class, 'index'])
+         ->name('expenses.index');
+
+    Route::get('/expenses/create', [ExpenseController::class, 'create'])
+         ->name('expenses.create');
+
+    Route::post('/expenses', [ExpenseController::class, 'store'])
+         ->name('expenses.store');
+
+    Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])
+         ->name('expenses.edit');
+
+    Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])
+         ->name('expenses.update');
+
+    Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])
+         ->name('expenses.destroy');
+
+    Route::post('/expenses/{expense}/restore', [ExpenseController::class, 'restore'])
+         ->name('expenses.restore');
+
+    // ── Expense Category API (JSON — used by dynamic JS) ──────────────────
+    Route::post('/expense-categories', [ExpenseCategoryController::class, 'storeCategory'])
+         ->name('expense-categories.store');
+
+    Route::delete('/expense-categories/{category}', [ExpenseCategoryController::class, 'destroyCategory'])
+         ->name('expense-categories.destroy');
+
+    Route::get('/expense-categories/{category}/sub-categories', [ExpenseCategoryController::class, 'subCategories'])
+         ->name('expense-categories.subs');
+
+    Route::post('/expense-sub-categories', [ExpenseCategoryController::class, 'storeSubCategory'])
+         ->name('expense-sub-categories.store');
+
+    Route::delete('/expense-sub-categories/{subCategory}', [ExpenseCategoryController::class, 'destroySubCategory'])
+         ->name('expense-sub-categories.destroy');
 });
