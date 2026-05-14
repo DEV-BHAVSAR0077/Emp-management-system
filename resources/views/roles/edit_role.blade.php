@@ -209,6 +209,14 @@
                             const v = getCheckbox('view-role');
                             if(v) v.checked = true;
                         }
+                        if (['create-category', 'edit-category', 'delete-category'].includes(pName)) {
+                            const v = getCheckbox('view-category');
+                            if(v) v.checked = true;
+                        }
+                        if (['create-expense', 'edit-expense', 'delete-expense'].includes(pName)) {
+                            const v = getCheckbox('view-expense');
+                            if(v) v.checked = true;
+                        }
                     }
 
                     // Unchecking 'view' automatically unchecks create/edit/delete
@@ -221,6 +229,18 @@
                         }
                         if (pName === 'view-role') {
                             ['create-role', 'edit-role', 'delete-role'].forEach(n => {
+                                const c = getCheckbox(n);
+                                if(c) c.checked = false;
+                            });
+                        }
+                        if (pName === 'view-category') {
+                            ['create-category', 'edit-category', 'delete-category'].forEach(n => {
+                                const c = getCheckbox(n);
+                                if(c) c.checked = false;
+                            });
+                        }
+                        if (pName === 'view-expense') {
+                            ['create-expense', 'edit-expense', 'delete-expense'].forEach(n => {
                                 const c = getCheckbox(n);
                                 if(c) c.checked = false;
                             });

@@ -16,6 +16,7 @@ class Navbar extends Component
     public $empTabActive;
     public $rolesTabActive;
     public $expensesTabActive;
+    public $categoriesTabActive;
 
     /**
      * Create a new component instance.
@@ -37,22 +38,26 @@ class Navbar extends Component
             $this->dashTabActive = false;
             $this->rolesTabActive = false;
             $this->expensesTabActive = false;
+            $this->categoriesTabActive = false;
         } elseif (in_array($route, ['roles.create', 'roles.edit'])) {
             $this->rolesTabActive = true;
             $this->dashTabActive = false;
             $this->empTabActive = false;
             $this->expensesTabActive = false;
+            $this->categoriesTabActive = false;
         } elseif (in_array($route, ['expenses.create', 'expenses.edit'])) {
             $this->expensesTabActive = true;
             $this->dashTabActive = false;
             $this->empTabActive = false;
             $this->rolesTabActive = false;
+            $this->categoriesTabActive = false;
         } else {
             // Dashboard route logic
             $this->empTabActive = $tab === 'emp' || request()->has('search') || request()->has('page');
             $this->rolesTabActive = $tab === 'roles';
             $this->expensesTabActive = $tab === 'expenses' || request()->has('expense_search') || request()->has('expense_page');
-            $this->dashTabActive = !$this->empTabActive && !$this->rolesTabActive && !$this->expensesTabActive;
+            $this->categoriesTabActive = $tab === 'categories';
+            $this->dashTabActive = !$this->empTabActive && !$this->rolesTabActive && !$this->expensesTabActive && !$this->categoriesTabActive;
         }
     }
 

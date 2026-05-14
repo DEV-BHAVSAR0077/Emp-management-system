@@ -38,12 +38,12 @@ class Expense extends Model
     // Category this expense belongs to
     public function category(): BelongsTo
     {
-        return $this->belongsTo(ExpenseCategory::class, 'expense_category_id')->withTrashed();
+        return $this->belongsTo(Category::class, 'expense_category_id')->withTrashed();
     }
 
     // Sub-category this expense belongs to (optional)
     public function subCategory(): BelongsTo
     {
-        return $this->belongsTo(ExpenseSubCategory::class, 'expense_sub_category_id')->withTrashed();
+        return $this->belongsTo(SubCategory::class, 'expense_sub_category_id')->withTrashed();
     }
 }

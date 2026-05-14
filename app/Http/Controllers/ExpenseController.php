@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
-use App\Models\ExpenseSubCategory;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,14 +16,14 @@ class ExpenseController extends Controller
         return [
             'name'                     => 'required|string|max:150',
             'amount'                   => 'required|numeric|min:0.01|max:9999999999.99',
-            'expense_category_id'      => 'required|exists:expense_categories,id',
+            'expense_category_id'      => 'required|exists:categories,id',
             'expense_sub_category_id'  => [
                 'nullable',
-                'exists:expense_sub_categories,id',
+                'exists:sub_categories,id',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($value) {
-                        $sub = ExpenseSubCategory::find($value);
-                        if (!$sub || $sub->expense_category_id != $request->expense_category_id) {
+                        $sub = SubCategory::find($value);
+                        if (!$sub || $sub->category_id != $request->expense_category_id) {
                             $fail('The selected sub-category does not belong to the chosen category.');
                         }
                     }
@@ -61,7 +61,7 @@ class ExpenseController extends Controller
     // Show the form for creating a new expense.
     public function create()
     {
-        $categories = ExpenseCategory::with('subCategories')->orderBy('name')->get();
+        $categories = Category::with('subCategories')->orderBy('name')->get();
 
         return view('expenses.create_expense', [
             'user'       => Auth::user(),
@@ -93,7 +93,7 @@ class ExpenseController extends Controller
     {
         $authUser = Auth::user();
 
-        $categories = ExpenseCategory::with('subCategories')->orderBy('name')->get();
+        $categories = Category::with('subCategories')->orderBy('name')->get();
 
         return view('expenses.edit_expense', [
             'user'       => $authUser,

@@ -3,7 +3,8 @@
     $empTabActive     = $activeTab === 'emp' || request('search') || request('page');
     $rolesTabActive   = $activeTab === 'roles';
     $expensesTabActive = $activeTab === 'expenses' || request('expense_search') || request('expense_page');
-    $dashTabActive    = !$empTabActive && !$rolesTabActive && !$expensesTabActive;
+    $categoriesTabActive = $activeTab === 'categories';
+    $dashTabActive    = !$empTabActive && !$rolesTabActive && !$expensesTabActive && !$categoriesTabActive;
 @endphp
 
 @extends('layouts.app')
@@ -16,4 +17,5 @@
     @include('auth.partials.tab_employees')
     @include('auth.partials.tab_roles')
     @include('auth.partials.tab_expenses')
+    @include('auth.partials.tab_categories')
 @endsection

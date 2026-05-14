@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Category;
 use App\Models\Expense;
-use App\Models\ExpenseCategory;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -46,7 +46,7 @@ class UserController extends Controller
             ->orderBy('expense_date', 'desc')
             ->paginate(10, ['*'], 'expense_page');
 
-        $expenseCategories = ExpenseCategory::with('subCategories')
+        $categories = Category::with('subCategories')
             ->orderBy('name')
             ->get();
 
@@ -59,7 +59,7 @@ class UserController extends Controller
             'expenses'          => $expenses,
             'expenseSearch'     => $expenseSearch,
             'expenseStatus'     => $expenseStatus,
-            'expenseCategories' => $expenseCategories,
+            'categories'        => $categories,
         ]);
     }
 

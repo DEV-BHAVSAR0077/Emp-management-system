@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -107,19 +107,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/expenses/{expense}/restore', [ExpenseController::class, 'restore'])
          ->name('expenses.restore')->middleware('permission:delete-expense,expense');
 
-    // ── Expense Category API (JSON — used by dynamic JS) ──────────────────
-    Route::post('/expense-categories', [ExpenseCategoryController::class, 'storeCategory'])
-         ->name('expense-categories.store')->middleware('permission:create-expense');
+    // ── Category Module ───────────────────────────────────────────────────
+    Route::post('/categories', [CategoryController::class, 'store'])
+         ->name('categories.store')->middleware('permission:create-category');
+    
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])
+         ->name('categories.update')->middleware('permission:edit-category');
+         
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
+         ->name('categories.destroy')->middleware('permission:delete-category');
+         
+    Route::delete('/sub-categories/{subCategory}', [CategoryController::class, 'destroySubCategory'])
+         ->name('sub-categories.destroy')->middleware('permission:delete-category');
+         
+    Route::get('/categories/{category}/sub-categories', [CategoryController::class, 'getSubCategories'])
+         ->name('categories.subs');
 
-    Route::delete('/expense-categories/{category}', [ExpenseCategoryController::class, 'destroyCategory'])
-         ->name('expense-categories.destroy')->middleware('permission:delete-expense');
 
-    Route::get('/expense-categories/{category}/sub-categories', [ExpenseCategoryController::class, 'subCategories'])
-         ->name('expense-categories.subs');
-
-    Route::post('/expense-sub-categories', [ExpenseCategoryController::class, 'storeSubCategory'])
-         ->name('expense-sub-categories.store')->middleware('permission:create-expense');
-
-    Route::delete('/expense-sub-categories/{subCategory}', [ExpenseCategoryController::class, 'destroySubCategory'])
-         ->name('expense-sub-categories.destroy')->middleware('permission:delete-expense');
 });
