@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
@@ -32,8 +31,6 @@ class RoleController extends Controller
     // Store a newly created role.
     public function store(Request $request)
     {
-        Gate::authorize('create-role');
-
         $request->validate([
             'name' => 'required|unique:roles,name',
             'description' => 'nullable|max:255',
@@ -56,8 +53,6 @@ class RoleController extends Controller
      
     public function edit(Role $role)
     {
-        Gate::authorize('edit-role');
-
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
             return redirect()->route('dashboard', ['tab' => 'roles'])
                              ->with('error', 'The "' . $role->name . '" role is a system role and cannot be edited.');
@@ -73,8 +68,6 @@ class RoleController extends Controller
     // Update an existing role.
     public function update(Request $request, Role $role)
     {
-        Gate::authorize('edit-role');
-
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
             return redirect()->route('dashboard', ['tab' => 'roles'])
                              ->with('error', 'The "' . $role->name . '" role is a system role and cannot be edited.');
@@ -109,8 +102,6 @@ class RoleController extends Controller
     // Delete a role and reset affected users to 'User'.
     public function destroy(Role $role)
     {
-        Gate::authorize('delete-role');
-
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
             return redirect()->route('dashboard', ['tab' => 'roles'])
                              ->with('error', 'The "' . $role->name . '" role is a system role and cannot be deleted.');
@@ -133,7 +124,6 @@ class RoleController extends Controller
 
     public function create()
     {
-        Gate::authorize('create-role');
         $permissions = Permission::all();
         $roles = Role::orderBy('name')->get();
         $user = Auth::user();

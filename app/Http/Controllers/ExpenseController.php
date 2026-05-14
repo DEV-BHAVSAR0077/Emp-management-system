@@ -7,7 +7,6 @@ use App\Models\ExpenseCategory;
 use App\Models\ExpenseSubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 
 class ExpenseController extends Controller
 {
@@ -62,8 +61,6 @@ class ExpenseController extends Controller
     // Show the form for creating a new expense.
     public function create()
     {
-        Gate::authorize('create-expense');
-
         $categories = ExpenseCategory::with('subCategories')->orderBy('name')->get();
 
         return view('expenses.create_expense', [
@@ -75,8 +72,6 @@ class ExpenseController extends Controller
     // Store a newly created expense.
     public function store(Request $request)
     {
-        Gate::authorize('create-expense');
-
         $request->validate($this->validationRules($request), $this->validationMessages());
 
         Expense::create([
@@ -98,11 +93,6 @@ class ExpenseController extends Controller
     {
         $authUser = Auth::user();
 
-        // Allow editing own expenses; require permission for others
-        if ($expense->user_id !== $authUser->id) {
-            Gate::authorize('edit-expense');
-        }
-
         $categories = ExpenseCategory::with('subCategories')->orderBy('name')->get();
 
         return view('expenses.edit_expense', [
@@ -116,11 +106,6 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense)
     {
         $authUser = Auth::user();
-
-        // Allow updating own expenses; require permission for others
-        if ($expense->user_id !== $authUser->id) {
-            Gate::authorize('edit-expense');
-        }
 
         $request->validate($this->validationRules($request), $this->validationMessages());
 
@@ -142,10 +127,6 @@ class ExpenseController extends Controller
     {
         $authUser = Auth::user();
 
-        if ($expense->user_id !== $authUser->id) {
-            Gate::authorize('delete-expense');
-        }
-
         $expense->delete();
 
         return back()->with('success', 'Expense deleted successfully.');
@@ -156,10 +137,6 @@ class ExpenseController extends Controller
     {
         $expense = Expense::onlyTrashed()->findOrFail($id);
         $authUser = Auth::user();
-
-        if ($expense->user_id !== $authUser->id) {
-            Gate::authorize('delete-expense');
-        }
 
         $expense->restore();
 

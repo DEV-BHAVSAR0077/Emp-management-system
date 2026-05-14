@@ -51,75 +51,75 @@ Route::middleware('auth')->group(function () {
 
     // Create a new user (admin/HR only — enforced in controller)
     Route::post('/users', [UserController::class, 'store'])
-         ->name('users.store');
+         ->name('users.store')->middleware('permission:create-user');
 
     // Create a new user page
     Route::get('/users/create', [UserController::class, 'create'])
-         ->name('users.create');
+         ->name('users.create')->middleware('permission:create-user');
 
     // Edit a user page
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])
-         ->name('users.edit');
+         ->name('users.edit')->middleware('permission:edit-user,user');
 
     // Update a user (own profile for regular users; any user for admin/HR)
     Route::put('/users/{user}', [UserController::class, 'update'])
-         ->name('users.update');
+         ->name('users.update')->middleware('permission:edit-user,user');
 
     // Delete a user (admin/HR only — enforced in controller)
     Route::delete('/users/{user}', [UserController::class, 'destroy'])
-         ->name('users.destroy');
+         ->name('users.destroy')->middleware('permission:delete-user');
 
     // ── Role CRUD (admin only — enforced in controller) ───────────────────────
     Route::get('/roles/create', [RoleController::class, 'create'])
-         ->name('roles.create');
+         ->name('roles.create')->middleware('permission:create-role');
 
     Route::post('/roles', [RoleController::class, 'store'])
-         ->name('roles.store');
+         ->name('roles.store')->middleware('permission:create-role');
 
     Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])
-         ->name('roles.edit');
+         ->name('roles.edit')->middleware('permission:edit-role');
 
     Route::put('/roles/{role}', [RoleController::class, 'update'])
-         ->name('roles.update');
+         ->name('roles.update')->middleware('permission:edit-role');
 
     Route::delete('/roles/{role}', [RoleController::class, 'destroy'])
-         ->name('roles.destroy');
+         ->name('roles.destroy')->middleware('permission:delete-role');
 
     // ── Expense CRUD (permission-gated in controller) ─────────────────────
     Route::get('/expenses', [ExpenseController::class, 'index'])
          ->name('expenses.index');
 
     Route::get('/expenses/create', [ExpenseController::class, 'create'])
-         ->name('expenses.create');
+         ->name('expenses.create')->middleware('permission:create-expense');
 
     Route::post('/expenses', [ExpenseController::class, 'store'])
-         ->name('expenses.store');
+         ->name('expenses.store')->middleware('permission:create-expense');
 
     Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])
-         ->name('expenses.edit');
+         ->name('expenses.edit')->middleware('permission:edit-expense,expense');
 
     Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])
-         ->name('expenses.update');
+         ->name('expenses.update')->middleware('permission:edit-expense,expense');
 
     Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])
-         ->name('expenses.destroy');
+         ->name('expenses.destroy')->middleware('permission:delete-expense,expense');
 
     Route::post('/expenses/{expense}/restore', [ExpenseController::class, 'restore'])
-         ->name('expenses.restore');
+         ->name('expenses.restore')->middleware('permission:delete-expense,expense');
 
     // ── Expense Category API (JSON — used by dynamic JS) ──────────────────
     Route::post('/expense-categories', [ExpenseCategoryController::class, 'storeCategory'])
-         ->name('expense-categories.store');
+         ->name('expense-categories.store')->middleware('permission:create-expense');
 
     Route::delete('/expense-categories/{category}', [ExpenseCategoryController::class, 'destroyCategory'])
-         ->name('expense-categories.destroy');
+         ->name('expense-categories.destroy')->middleware('permission:delete-expense');
 
     Route::get('/expense-categories/{category}/sub-categories', [ExpenseCategoryController::class, 'subCategories'])
          ->name('expense-categories.subs');
 
     Route::post('/expense-sub-categories', [ExpenseCategoryController::class, 'storeSubCategory'])
-         ->name('expense-sub-categories.store');
+         ->name('expense-sub-categories.store')->middleware('permission:create-expense');
 
     Route::delete('/expense-sub-categories/{subCategory}', [ExpenseCategoryController::class, 'destroySubCategory'])
-         ->name('expense-sub-categories.destroy');
+         ->name('expense-sub-categories.destroy')->middleware('permission:delete-expense');
 });

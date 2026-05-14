@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseSubCategory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class ExpenseCategoryController extends Controller
 {
@@ -20,8 +19,6 @@ class ExpenseCategoryController extends Controller
     // Store a new category (JSON)
     public function storeCategory(Request $request)
     {
-        Gate::authorize('create-expense');
-
         $request->validate([
             'name' => 'required|string|max:100|unique:expense_categories,name',
         ], [
@@ -36,8 +33,6 @@ class ExpenseCategoryController extends Controller
     // Delete a category (JSON)
     public function destroyCategory(ExpenseCategory $category)
     {
-        Gate::authorize('delete-expense');
-
         if ($category->expenses()->exists()) {
             return response()->json(['error' => 'Cannot delete — this category has expenses linked to it.'], 422);
         }
@@ -51,8 +46,6 @@ class ExpenseCategoryController extends Controller
     // Store a new sub-category (JSON)
     public function storeSubCategory(Request $request)
     {
-        Gate::authorize('create-expense');
-
         $request->validate([
             'name'                => 'required|string|max:100',
             'expense_category_id' => 'required|exists:expense_categories,id',
@@ -77,8 +70,6 @@ class ExpenseCategoryController extends Controller
     // Delete a sub-category (JSON)
     public function destroySubCategory(ExpenseSubCategory $subCategory)
     {
-        Gate::authorize('delete-expense');
-
         $subCategory->delete();
 
         return response()->json(['success' => true]);

@@ -9,7 +9,6 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -67,8 +66,6 @@ class UserController extends Controller
     // Store a newly created user.
     public function store(UpdateUserRequest $request)
     {
-        Gate::authorize('create-user');
-
         $data = [
             'name'     => $request->name,
             'email'    => $request->email,
@@ -91,8 +88,6 @@ class UserController extends Controller
      
     public function create()
     {
-        Gate::authorize('create-user');
-
         $roles = Role::orderBy('name')->get();
 
         return view('employees.create_user', [
@@ -109,11 +104,6 @@ class UserController extends Controller
     {
         $authUser = Auth::user();
 
-        // Regular users may only edit themselves
-        if ($authUser->id !== $user->id) {
-            Gate::authorize('edit-user');
-        }
-
         $roles = Role::orderBy('name')->get();
 
         return view('employees.edit_user', [
@@ -129,11 +119,6 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         $authUser = Auth::user();
-
-        // Regular users may only edit themselves
-        if ($authUser->id !== $user->id) {
-            Gate::authorize('edit-user');
-        }
 
         $data = [
             'name'  => $request->name,
@@ -166,8 +151,6 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $authUser = Auth::user();
-
-        Gate::authorize('delete-user');
 
         if ($user->id === $authUser->id) {
             return redirect()->route('dashboard')
