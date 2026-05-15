@@ -13,6 +13,16 @@ class RoleController extends Controller
     // Core system roles that cannot be deleted
     const PROTECTED_ROLES = ['admin'];
 
+    // Display the roles list.
+    public function index()
+    {
+        $roles = Role::orderBy('name')->get();
+        return view('roles.index', [
+            'user'  => Auth::user(),
+            'roles' => $roles,
+        ]);
+    }
+
     // Store a newly created role.
     public function store(Request $request)
     {
@@ -30,7 +40,7 @@ class RoleController extends Controller
 
         $role->permissions()->attach($request->permissions ?? []);
 
-        return redirect()->route('dashboard', ['tab' => 'roles'])
+        return redirect()->route('roles.index')
             ->with('success', 'Role Created Successfully');
     }
 
@@ -39,7 +49,7 @@ class RoleController extends Controller
     public function edit(Role $role)
     {
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
-            return redirect()->route('dashboard', ['tab' => 'roles'])
+            return redirect()->route('roles.index')
                              ->with('error', 'The "' . $role->name . '" role is a system role and cannot be edited.');
         }
 
@@ -54,7 +64,7 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
-            return redirect()->route('dashboard', ['tab' => 'roles'])
+            return redirect()->route('roles.index')
                              ->with('error', 'The "' . $role->name . '" role is a system role and cannot be edited.');
         }
 
@@ -80,7 +90,7 @@ class RoleController extends Controller
 
         $role->permissions()->sync($request->permissions ?? []);
 
-        return redirect()->route('dashboard', ['tab' => 'roles'])
+        return redirect()->route('roles.index')
             ->with('success', 'Role Updated Successfully');
     }
 
@@ -88,7 +98,7 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         if (in_array(strtolower($role->name), self::PROTECTED_ROLES, true)) {
-            return redirect()->route('dashboard', ['tab' => 'roles'])
+            return redirect()->route('roles.index')
                              ->with('error', 'The "' . $role->name . '" role is a system role and cannot be deleted.');
         }
 
@@ -103,7 +113,7 @@ class RoleController extends Controller
             $msg .= " {$affected} " . ($affected === 1 ? 'user was' : 'users were') . ' reset to the User role.';
         }
 
-        return redirect()->route('dashboard', ['tab' => 'roles'])
+        return redirect()->route('roles.index')
                          ->with('success', $msg);
     }
 

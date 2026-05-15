@@ -13,11 +13,17 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    //Display the dashboard with paginated user list.
-     
+    // Display the dashboard.
+    public function dashboard()
+    {
+        return view('auth.dashboard', [
+            'user' => Auth::user(),
+        ]);
+    }
+
+    // Display the paginated user list.
     public function index(Request $request)
     {
-
         $search  = $request->input('search', '');
         $perPage = 8;
 
@@ -30,36 +36,13 @@ class UserController extends Controller
             ->paginate($perPage);
 
         $roles    = Role::orderBy('name')->get();
-        $rolesMap = $roles->keyBy('name'); // keyed by role name for easy badge lookup
+        $rolesMap = $roles->keyBy('name');
 
-        // ── Expense data for the expenses tab ─────────────────────────────────
-        $expenseSearch = $request->input('expense_search', '');
-        $expenseStatus = $request->input('expense_status', 'active');
-
-        $expenses = Expense::with(['category', 'subCategory', 'user'])
-            ->when($expenseStatus === 'trashed', function ($query) {
-                $query->onlyTrashed();
-            })
-            ->when($expenseSearch, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%");
-            })
-            ->orderBy('expense_date', 'desc')
-            ->paginate(10, ['*'], 'expense_page');
-
-        $categories = Category::with('subCategories')
-            ->orderBy('name')
-            ->get();
-
-        return view('auth.dashboard', [
-            'user'              => Auth::user(),
-            'users'             => $users,
-            'search'            => $search,
-            'roles'             => $roles,
-            'rolesMap'          => $rolesMap,
-            'expenses'          => $expenses,
-            'expenseSearch'     => $expenseSearch,
-            'expenseStatus'     => $expenseStatus,
-            'categories'        => $categories,
+        return view('employees.index', [
+            'user'     => Auth::user(),
+            'users'    => $users,
+            'search'   => $search,
+            'rolesMap' => $rolesMap,
         ]);
     }
 
@@ -80,7 +63,7 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route('dashboard', ['tab' => 'emp'])
+        return redirect()->route('users.index')
                          ->with('success', 'User created successfully.');
     }
 
@@ -134,7 +117,7 @@ class UserController extends Controller
             // Prevent admin from demoting themselves
             if ($user->id === $authUser->id) {
                 if (strtolower($request->role) !== 'admin') {
-                    return redirect()->route('dashboard')
+                    return redirect()->route('users.index')
                                      ->with('error', 'You cannot remove admin access from your own account.');
                 }
             }
@@ -143,7 +126,7 @@ class UserController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('dashboard', ['tab' => 'emp'])
+        return redirect()->route('users.index')
                          ->with('success', 'User updated successfully.');
     }
 
@@ -153,7 +136,7 @@ class UserController extends Controller
         $authUser = Auth::user();
 
         if ($user->id === $authUser->id) {
-            return redirect()->route('dashboard')
+            return redirect()->route('users.index')
                              ->with('error', 'You cannot delete your own account.');
         }
 

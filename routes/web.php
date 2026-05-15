@@ -39,9 +39,13 @@ Route::middleware('guest')->group(function () {
 // ─── Authenticated routes (accessible only when logged in) ────────────────────
 Route::middleware('auth')->group(function () {
 
-    // Dashboard (with user list + search)
-    Route::get('/dashboard', [UserController::class, 'index'])
+    // Dashboard
+    Route::get('/dashboard', [UserController::class, 'dashboard'])
          ->name('dashboard');
+
+    // Users List
+    Route::get('/users', [UserController::class, 'index'])
+         ->name('users.index')->middleware('permission:view-user');
 
     // Logout
     Route::post('/logout', [AuthController::class, 'logout'])
@@ -70,6 +74,9 @@ Route::middleware('auth')->group(function () {
          ->name('users.destroy')->middleware('permission:delete-user');
 
     // ── Role CRUD (admin only — enforced in controller) ───────────────────────
+    Route::get('/roles', [RoleController::class, 'index'])
+         ->name('roles.index')->middleware('permission:view-role');
+
     Route::get('/roles/create', [RoleController::class, 'create'])
          ->name('roles.create')->middleware('permission:create-role');
 
@@ -87,7 +94,7 @@ Route::middleware('auth')->group(function () {
 
     // ── Expense CRUD (permission-gated in controller) ─────────────────────
     Route::get('/expenses', [ExpenseController::class, 'index'])
-         ->name('expenses.index');
+         ->name('expenses.index')->middleware('permission:view-expense');
 
     Route::get('/expenses/create', [ExpenseController::class, 'create'])
          ->name('expenses.create')->middleware('permission:create-expense');
@@ -108,6 +115,9 @@ Route::middleware('auth')->group(function () {
          ->name('expenses.restore')->middleware('permission:delete-expense,expense');
 
     // ── Category Module ───────────────────────────────────────────────────
+    Route::get('/categories', [CategoryController::class, 'index'])
+         ->name('categories.index')->middleware('permission:view-category');
+
     Route::get('/categories/create', [CategoryController::class, 'create'])
          ->name('categories.create')->middleware('permission:create-category');
          

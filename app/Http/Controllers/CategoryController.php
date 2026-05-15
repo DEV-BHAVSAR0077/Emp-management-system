@@ -9,6 +9,19 @@ use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
+    // Display the categories list
+    public function index()
+    {
+        $categories = Category::with('subCategories')
+            ->orderBy('name')
+            ->get();
+
+        return view('categories.index', [
+            'user'       => auth()->user(),
+            'categories' => $categories,
+        ]);
+    }
+
     // Show form to create a new category
     public function create()
     {
@@ -45,7 +58,7 @@ class CategoryController extends Controller
             }
         }
 
-        return redirect()->route('dashboard', ['tab' => 'categories'])->with('success', 'Category created successfully.');
+        return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
     // Update an existing category and sync sub-categories
@@ -91,7 +104,7 @@ class CategoryController extends Controller
             $category->subCategories()->delete();
         }
 
-        return redirect()->route('dashboard', ['tab' => 'categories'])->with('success', 'Category updated successfully.');
+        return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
 
     // Soft delete a main category and its sub-categories
@@ -100,7 +113,7 @@ class CategoryController extends Controller
         $category->subCategories()->delete();
         $category->delete();
 
-        return redirect()->route('dashboard', ['tab' => 'categories'])->with('success', 'Category deleted successfully.');
+        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
 
     // Soft delete a single sub-category via AJAX

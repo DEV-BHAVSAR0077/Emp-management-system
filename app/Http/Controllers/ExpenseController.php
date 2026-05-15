@@ -52,10 +52,28 @@ class ExpenseController extends Controller
         ];
     }
 
-    // Redirect to dashboard with expenses tab active.
-    public function index()
+    // Display the expenses list.
+    public function index(Request $request)
     {
-        return redirect()->route('dashboard', ['tab' => 'expenses']);
+        $expenseSearch = $request->input('expense_search', '');
+        $expenseStatus = $request->input('expense_status', 'active');
+
+        $expenses = Expense::with(['category', 'subCategory', 'user'])
+            ->when($expenseStatus === 'trashed', function ($query) {
+                $query->onlyTrashed();
+            })
+            ->when($expenseSearch, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('expense_date', 'desc')
+            ->paginate(10, ['*'], 'expense_page');
+
+        return view('expenses.index', [
+            'user'          => Auth::user(),
+            'expenses'      => $expenses,
+            'expenseSearch' => $expenseSearch,
+            'expenseStatus' => $expenseStatus,
+        ]);
     }
 
     // Show the form for creating a new expense.
@@ -84,7 +102,7 @@ class ExpenseController extends Controller
             'note'                     => $request->note,
         ]);
 
-        return redirect()->route('dashboard', ['tab' => 'expenses'])
+        return redirect()->route('expenses.index')
                          ->with('success', 'Expense created successfully.');
     }
 
@@ -116,7 +134,7 @@ class ExpenseController extends Controller
             'note'                     => $request->note,
         ]);
 
-        return redirect()->route('dashboard', ['tab' => 'expenses'])
+        return redirect()->route('expenses.index')
                          ->with('success', 'Expense updated successfully.');
     }
 
