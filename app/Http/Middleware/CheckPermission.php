@@ -9,13 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckPermission
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  string  $permission
-     * @param  string|null  $modelKey
-     */
     public function handle(Request $request, Closure $next, string $permission, ?string $modelKey = null): Response
     {
         $user = Auth::user();

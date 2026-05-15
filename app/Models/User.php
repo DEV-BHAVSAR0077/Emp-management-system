@@ -46,21 +46,6 @@ class User extends Authenticatable
 
     // Permission helpers ────────────────────────────────────────────────
 
-    /**
-     * The normalised role key for this user (lowercase role name).
-     * 'Admin' → 'admin', 'HR' → 'hr', anything else → 'user'
-     */
-    public function getRoleKey(): string
-    {
-        return match (strtolower($this->role)) {
-            'admin' => 'admin',
-            'hr'    => 'hr',
-            default => 'user',
-        };
-    }
-
-
-
     public function hasPermission($permission)
     {
         return $this->roleInfo &&

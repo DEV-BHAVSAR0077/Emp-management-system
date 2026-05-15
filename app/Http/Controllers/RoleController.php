@@ -7,26 +7,11 @@ use App\Models\User;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
     // Core system roles that cannot be deleted
     const PROTECTED_ROLES = ['admin'];
-
-    //Show the Create Role page.
-     
-    // public function create()
-    // {
-    //     if (! Auth::user()->isAdmin()) {
-    //         abort(403, 'Only admins can manage roles.');
-    //     }
-
-    //     return view('roles.create_role', [
-    //         'user' => Auth::user(),
-    //         'roles' => Role::orderBy('name')->get(),
-    //     ]);
-    // }
 
     // Store a newly created role.
     public function store(Request $request)

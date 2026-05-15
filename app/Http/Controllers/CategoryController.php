@@ -9,6 +9,18 @@ use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
+    // Show form to create a new category
+    public function create()
+    {
+        return view('categories.create_category');
+    }
+
+    // Show form to edit an existing category
+    public function edit(Category $category)
+    {
+        return view('categories.edit_category', compact('category'));
+    }
+
     // Store a new main category along with optional dynamic sub-categories
     public function store(Request $request)
     {

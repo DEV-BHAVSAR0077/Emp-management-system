@@ -105,8 +105,6 @@ class ExpenseController extends Controller
     // Update the specified expense.
     public function update(Request $request, Expense $expense)
     {
-        $authUser = Auth::user();
-
         $request->validate($this->validationRules($request), $this->validationMessages());
 
         $expense->update([
@@ -125,8 +123,6 @@ class ExpenseController extends Controller
     // Soft-delete the specified expense.
     public function destroy(Expense $expense)
     {
-        $authUser = Auth::user();
-
         $expense->delete();
 
         return back()->with('success', 'Expense deleted successfully.');
@@ -136,7 +132,6 @@ class ExpenseController extends Controller
     public function restore($id)
     {
         $expense = Expense::onlyTrashed()->findOrFail($id);
-        $authUser = Auth::user();
 
         $expense->restore();
 

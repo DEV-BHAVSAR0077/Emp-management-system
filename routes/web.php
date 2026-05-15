@@ -108,9 +108,15 @@ Route::middleware('auth')->group(function () {
          ->name('expenses.restore')->middleware('permission:delete-expense,expense');
 
     // ── Category Module ───────────────────────────────────────────────────
+    Route::get('/categories/create', [CategoryController::class, 'create'])
+         ->name('categories.create')->middleware('permission:create-category');
+         
     Route::post('/categories', [CategoryController::class, 'store'])
          ->name('categories.store')->middleware('permission:create-category');
     
+    Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])
+         ->name('categories.edit')->middleware('permission:edit-category');
+         
     Route::put('/categories/{category}', [CategoryController::class, 'update'])
          ->name('categories.update')->middleware('permission:edit-category');
          

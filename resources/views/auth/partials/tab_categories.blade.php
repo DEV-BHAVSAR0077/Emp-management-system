@@ -1,277 +1,97 @@
 @if($categoriesTabActive)
 <div class="tab-pane active" id="tab-categories">
     <div class="panel">
-        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Category Management</h2>
-            @can('create-category')
-            <button type="button" class="btn btn-primary btn-sm" id="btn-add-main-category">
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
-                New Category
-            </button>
-            @endcan
+        <div class="panel-header">
+            <h2>Categories
+                <span class="badge" style="margin-left:.5rem; font-size:.72rem;">{{ count($categories) }}</span>
+            </h2>
+            <div class="panel-actions">
+                {{-- Add Category --}}
+                @can('create-category')
+                <a href="{{ route('categories.create') }}" class="btn btn-primary btn-sm" id="btn-add-main-category">
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
+                    New Category
+                </a>
+                @endcan
+            </div>
         </div>
-        <div class="panel-body">
-            
-            {{-- Error Summary --}}
-            @if ($errors->any())
-                <div class="alert alert-danger" style="color:var(--danger); background: #ffebee; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                    <strong>Validation Error:</strong> Please check the fields below.
+
+        <div class="table-wrap">
+            @if(count($categories) > 0)
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Category</th>
+                        <th>Sub-Categories</th>
+                        <th>Last Updated</th>
+                        <th style="text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($categories as $index => $c)
+                    <tr id="category-row-{{ $c->id }}">
+                        <td style="color:var(--text-muted); width:50px;">
+                            {{ $index + 1 }}
+                        </td>
+                        <td>
+                            <strong>{{ $c->name }}</strong>
+                        </td>
+                        <td>
+                            @if($c->subCategories->count() > 0)
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    @foreach($c->subCategories as $sub)
+                                        <span class="badge" style="background:#e0e7ff; color:#3730a3;">{{ $sub->name }}</span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span style="color:var(--text-muted); font-size: 0.85rem;">None</span>
+                            @endif
+                        </td>
+                        <td style="color:var(--text-muted);">{{ $c->updated_at->format('d M Y') }}</td>
+                        <td>
+                            <div class="actions-cell" style="justify-content:center;">
+                                @can('edit-category')
+                                <a
+                                    href="{{ route('categories.edit', $c) }}"
+                                    class="btn btn-edit btn-sm"
+                                    title="Edit category"
+                                >
+                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/></svg>
+                                    Edit
+                                </a>
+                                @endcan
+
+                                @can('delete-category')
+                                <form method="POST" action="{{ route('categories.destroy', $c) }}" style="display:inline;"
+                                      onsubmit="return confirm('Are you sure you want to delete category \'{{ addslashes($c->name) }}\'? This action cannot be undone.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete category">
+                                        <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd"/></svg>
+                                        Delete
+                                    </button>
+                                </form>
+                                @endcan
+
+                                @cannot('edit-category')
+                                    @cannot('delete-category')
+                                        <span style="font-size:.75rem; color:var(--text-muted);">—</span>
+                                    @endcannot
+                                @endcannot
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @else
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <p>No categories found. Add the first one!</p>
                 </div>
             @endif
-
-            <div id="categories-container" style="display: flex; flex-direction: column; gap: 20px;">
-                
-                {{-- Form for creating a new Category (Hidden by default, shown via JS) --}}
-                <div class="category-card" id="new-category-form-container" style="{{ $errors->has('name') && !old('_method') ? 'display:block;' : 'display:none;' }} border: 1px solid var(--border); padding: 15px; border-radius: 6px; background: var(--surface);">
-                    <form method="POST" action="{{ route('categories.store') }}">
-                        @csrf
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h3 style="margin: 0; font-size: 1.1rem;">Create New Category</h3>
-                            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('new-category-form-container').style.display='none'">Cancel</button>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Category Name <span style="color:var(--danger);">*</span></label>
-                            <input type="text" name="name" value="{{ old('_method') ? '' : old('name') }}" placeholder="Main Category Name" class="{{ $errors->has('name') && !old('_method') ? 'input-error' : '' }}" required />
-                            @if($errors->has('name') && !old('_method'))<span class="field-error">{{ $errors->first('name') }}</span>@endif
-                        </div>
-
-                        <div class="sub-categories-section">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <label style="margin: 0;">Sub-Categories</label>
-                                <button type="button" class="btn btn-ghost btn-sm btn-add-sub" data-target="new-category-subs">
-                                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
-                                    Add Sub-Category
-                                </button>
-                            </div>
-                            
-                            <div id="new-category-subs" style="display: flex; flex-direction: column; gap: 10px; margin-left: 1.5rem;">
-                                {{-- Dynamic Sub-categories will be appended here --}}
-                                @if(!old('_method') && old('sub_categories'))
-                                    @foreach(old('sub_categories') as $index => $sub)
-                                        <div class="sub-category-row" style="display: flex; gap: 10px;">
-                                            <div style="flex-grow: 1;">
-                                                <input type="text" name="sub_categories[{{ $index }}][name]" value="{{ $sub['name'] ?? '' }}" placeholder="Sub-category name" class="cat-inline-input" required />
-                                                @error("sub_categories.{$index}.name")<span class="field-error">{{ $message }}</span>@enderror
-                                            </div>
-                                            <button type="button" class="btn btn-danger btn-remove-sub" style="color: var(--danger); background: transparent; border: 1px solid var(--danger);">
-                                                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-                                            </button>
-                                        </div>
-                                    @endforeach
-                                @else
-                                    <div class="sub-category-row" style="display: flex; gap: 10px;">
-                                        <div style="flex-grow: 1;">
-                                            <input type="text" name="sub_categories[0][name]" placeholder="Sub-category name" class="cat-inline-input" required />
-                                        </div>
-                                        <button type="button" class="btn btn-danger btn-remove-sub" style="color: var(--danger); background: transparent; border: 1px solid var(--danger);">
-                                            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-                                        </button>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-
-                    </form>
-                </div>
-
-                {{-- Existing Categories Loop --}}
-                @foreach($categories as $category)
-                    <div class="category-card" style="border: 1px solid var(--border); padding: 15px; border-radius: 6px; background: var(--surface);">
-                        <form method="POST" action="{{ route('categories.update', $category) }}">
-                            @csrf
-                            @method('PUT')
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <h3 style="margin: 0; font-size: 1.1rem;">Edit Category</h3>
-                                @can('delete-category')
-                                <button type="button" class="btn btn-danger btn-sm" onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this category?')) document.getElementById('delete-cat-{{ $category->id }}').submit();">Delete</button>
-                                @endcan
-                            </div>
-
-                            <div class="form-group">
-                                <label>Category Name <span style="color:var(--danger);">*</span></label>
-                                <input type="text" name="name" value="{{ old('_method') === 'PUT' && old('category_id') == $category->id ? old('name') : $category->name }}" required @cannot('edit-category') disabled @endcannot />
-                                <input type="hidden" name="category_id" value="{{ $category->id }}">
-                            </div>
-
-                            <div class="sub-categories-section">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <label style="margin: 0;">Sub-Categories</label>
-                                    @can('edit-category')
-                                    <button type="button" class="btn btn-ghost btn-sm btn-add-sub" data-target="edit-category-subs-{{ $category->id }}">
-                                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
-                                        Add Sub-Category
-                                    </button>
-                                    @endcan
-                                </div>
-                                
-                                <div id="edit-category-subs-{{ $category->id }}" style="display: flex; flex-direction: column; gap: 10px; margin-left: 1.5rem;">
-                                    @php
-                                        // Use old data if validation failed for THIS specific category
-                                        $subs = (old('_method') === 'PUT' && old('category_id') == $category->id && old('sub_categories')) 
-                                                ? old('sub_categories') 
-                                                : $category->subCategories->toArray();
-                                    @endphp
-
-                                    @foreach($subs as $index => $sub)
-                                        <div class="sub-category-row" style="display: flex; gap: 10px;" data-id="{{ $sub['id'] ?? '' }}">
-                                            @if(!empty($sub['id']))
-                                                <input type="hidden" name="sub_categories[{{ $index }}][id]" value="{{ $sub['id'] }}">
-                                            @endif
-                                            <div style="flex-grow: 1;">
-                                                <input type="text" name="sub_categories[{{ $index }}][name]" value="{{ $sub['name'] ?? '' }}" placeholder="Sub-category name" class="cat-inline-input" required @cannot('edit-category') disabled @endcannot />
-                                                @error("sub_categories.{$index}.name")
-                                                    @if(old('category_id') == $category->id)
-                                                        <span class="field-error">{{ $message }}</span>
-                                                    @endif
-                                                @enderror
-                                            </div>
-                                            @can('edit-category')
-                                            <button type="button" class="btn btn-danger btn-remove-sub" data-db-id="{{ $sub['id'] ?? '' }}" style="color: var(--danger); background: transparent; border: 1px solid var(--danger);">
-                                                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-                                            </button>
-                                            @endcan
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                        </form>
-                        
-                        {{-- Hidden Delete Form --}}
-                        <form id="delete-cat-{{ $category->id }}" action="{{ route('categories.destroy', $category) }}" method="POST" style="display: none;">
-                            @csrf
-                            @method('DELETE')
-                        </form>
-                    </div>
-                @endforeach
-
-            </div>
         </div>
     </div>
 </div>
-
-{{-- Template for new sub-category row used by JS --}}
-<template id="sub-category-template">
-    <div class="sub-category-row" style="display: flex; gap: 10px;">
-        <div style="flex-grow: 1;">
-            <input type="text" name="sub_categories[__INDEX__][name]" placeholder="Sub-category name" class="cat-inline-input" required />
-        </div>
-        <button type="button" class="btn btn-danger btn-remove-sub" style="color: var(--danger); background: transparent; border: 1px solid var(--danger);">
-            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
-        </button>
-    </div>
-</template>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    var csrf = document.querySelector('meta[name="csrf-token"]').content;
-
-    // ── Toggle New Category Form ────────────────────────────────────────
-    var addBtn = document.getElementById('btn-add-main-category');
-    var formContainer = document.getElementById('new-category-form-container');
-    if (addBtn && formContainer) {
-        addBtn.addEventListener('click', function () {
-            formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
-            if (formContainer.style.display !== 'none') {
-                var nameInput = formContainer.querySelector('input[name="name"]');
-                if (nameInput) nameInput.focus();
-            }
-        });
-    }
-
-    // ── Add Sub-Category Row ("+") ──────────────────────────────────────
-    var template = document.getElementById('sub-category-template');
-
-    document.querySelectorAll('.btn-add-sub').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var targetId = btn.getAttribute('data-target');
-            var container = document.getElementById(targetId);
-            if (!container || !template) return;
-
-            // Calculate next index
-            var existingRows = container.querySelectorAll('.sub-category-row');
-            var nextIndex = 0;
-            existingRows.forEach(function (row) {
-                var inputs = row.querySelectorAll('input[name*="sub_categories"]');
-                inputs.forEach(function (inp) {
-                    var match = inp.name.match(/sub_categories\[(\d+)\]/);
-                    if (match) {
-                        var idx = parseInt(match[1], 10);
-                        if (idx >= nextIndex) nextIndex = idx + 1;
-                    }
-                });
-            });
-
-            // Clone the template and replace __INDEX__
-            var clone = template.content.cloneNode(true);
-            var inputs = clone.querySelectorAll('input');
-            inputs.forEach(function (inp) {
-                inp.name = inp.name.replace('__INDEX__', nextIndex);
-            });
-
-            container.appendChild(clone);
-
-            // Focus the new input
-            var newRows = container.querySelectorAll('.sub-category-row');
-            var lastRow = newRows[newRows.length - 1];
-            if (lastRow) {
-                var newInput = lastRow.querySelector('input[type="text"]');
-                if (newInput) newInput.focus();
-            }
-        });
-    });
-
-    // ── Remove Sub-Category Row ("-") ───────────────────────────────────
-    document.addEventListener('click', function (e) {
-        var removeBtn = e.target.closest('.btn-remove-sub');
-        if (!removeBtn) return;
-
-        var row = removeBtn.closest('.sub-category-row');
-        if (!row) return;
-
-        var dbId = removeBtn.getAttribute('data-db-id');
-
-        // If this sub-category exists in the database, soft-delete it via AJAX
-        if (dbId) {
-            removeBtn.disabled = true;
-
-            fetch('/sub-categories/' + dbId, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            }).then(function (response) {
-                return response.json();
-            }).then(function (data) {
-                if (data.success) {
-                    row.remove();
-                } else {
-                    alert('Failed to remove sub-category.');
-                    removeBtn.disabled = false;
-                }
-            }).catch(function () {
-                alert('An error occurred. Please try again.');
-                removeBtn.disabled = false;
-            });
-        } else {
-            // If it's a new row (not yet saved), simply remove from the DOM
-            row.remove();
-        }
-    });
-
-    // ── Auto-Save on Input Change (Blur/Enter) ──────────────────────────
-    document.addEventListener('change', function(e) {
-        if (e.target.matches('.category-card input[type="text"]')) {
-            var form = e.target.closest('form');
-            if (form) {
-                form.submit();
-            }
-        }
-    });
-});
-</script>
-
 @endif

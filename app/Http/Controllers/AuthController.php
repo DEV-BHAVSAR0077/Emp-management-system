@@ -79,16 +79,6 @@ class AuthController
     }
 
     /**
-     * Show the dashboard (protected page after login).
-     */
-    public function dashboard()
-    {
-        return view('auth.dashboard', [
-            'user' => Auth::user(),
-        ]);
-    }
-
-    /**
      * Handle logout.
      */
     public function logout(Request $request)
