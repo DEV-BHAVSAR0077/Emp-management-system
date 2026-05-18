@@ -8,9 +8,7 @@
                 <span class="badge" style="margin-left:.5rem; font-size:.72rem;">{{ $expenses->total() }}</span>
             </h2>
             <div class="panel-actions">
-                <form method="GET" action="{{ route('dashboard') }}" class="search-form" id="form-expense-search">
-                    <input type="hidden" name="tab" value="expenses" />
-                    
+                <form method="GET" action="{{ route('expenses.index') }}" class="search-form" id="form-expense-search">
                     <select name="expense_status" class="search-input" style="width: auto; margin-right: .2rem;" onchange="this.form.submit()">
                         <option value="active" {{ $expenseStatus === 'active' ? 'selected' : '' }}>Active Expenses</option>
                         <option value="trashed" {{ $expenseStatus === 'trashed' ? 'selected' : '' }}>Deleted Expenses</option>
@@ -18,7 +16,7 @@
 
                     <input type="text" name="expense_search" id="input-expense-search" class="search-input" placeholder="Search expenses…" value="{{ $expenseSearch }}" autocomplete="off" />
                     @if ($expenseSearch)
-                        <a href="{{ route('dashboard', ['tab' => 'expenses', 'expense_status' => $expenseStatus]) }}" class="btn btn-ghost btn-sm" id="btn-clear-expense-search" title="Clear search">✕</a>
+                        <a href="{{ route('expenses.index', ['expense_status' => $expenseStatus]) }}" class="btn btn-ghost btn-sm" id="btn-clear-expense-search" title="Clear search">✕</a>
                     @endif
                     <button type="submit" class="btn btn-ghost btn-sm" id="btn-expense-search">Search</button>
                 </form>
@@ -127,7 +125,7 @@
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
                     <p>
                         @if($expenseSearch)
-                            No expenses match your search. <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" style="color:var(--info);">Clear search</a>
+                            No expenses match your search. <a href="{{ route('expenses.index', ['expense_status' => $expenseStatus]) }}" style="color:var(--info);">Clear search</a>
                         @else
                             No expenses recorded yet.
                             @can('create-expense') <a href="{{ route('expenses.create') }}" style="color:var(--info);">Add your first expense</a> @endcan

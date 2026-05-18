@@ -8,8 +8,7 @@
             </h2>
             <div class="panel-actions">
                 {{-- Search --}}
-                <form method="GET" action="{{ route('dashboard') }}" class="search-form" id="form-search">
-                    <input type="hidden" name="tab" value="emp" />
+                <form method="GET" action="{{ route('users.index') }}" class="search-form" id="form-search">
                     <input
                         type="text"
                         name="search"
@@ -20,7 +19,7 @@
                         autocomplete="off"
                     />
                     @if ($search)
-                        <a href="{{ route('dashboard', ['tab' => 'emp']) }}" class="btn btn-ghost btn-sm" id="btn-clear-search" title="Clear search">✕</a>
+                        <a href="{{ route('users.index') }}" class="btn btn-ghost btn-sm" id="btn-clear-search" title="Clear search">✕</a>
                     @endif
                     <button type="submit" class="btn btn-ghost btn-sm" id="btn-search">Search</button>
                 </form>
@@ -131,7 +130,7 @@
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     <p>
                         @if($search)
-                            No users match your search. <a href="{{ route('dashboard') }}" style="color:var(--info);">Clear search</a>
+                            No users match your search. <a href="{{ route('users.index') }}" style="color:var(--info);">Clear search</a>
                         @else
                             No users found. Add the first one!
                         @endif
