@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AVController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -129,5 +130,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/categories/{category}/sub-categories', [CategoryController::class, 'getSubCategories'])
          ->name('categories.subs');
 
+    // ── Agency & Vendor Module ────────────────────────────────────────────
+    Route::resource('agency-vendors', AVController::class)
+         ->only(['create', 'store', 'edit', 'update', 'destroy'])
+         ->parameters(['agency-vendors' => 'agencyVendor'])
+         ->middleware([
+             'create'  => 'permission:create-agency-vendor',
+             'store'   => 'permission:create-agency-vendor',
+             'edit'    => 'permission:edit-agency-vendor',
+             'update'  => 'permission:edit-agency-vendor',
+             'destroy' => 'permission:delete-agency-vendor',
+         ])
+         ->names([
+             'create'  => 'agency_vendors.create',
+             'store'   => 'agency_vendors.store',
+             'edit'    => 'agency_vendors.edit',
+             'update'  => 'agency_vendors.update',
+             'destroy' => 'agency_vendors.destroy',
+         ]);
 
 });

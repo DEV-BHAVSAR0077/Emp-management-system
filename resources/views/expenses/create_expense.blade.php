@@ -41,6 +41,19 @@
                 ])
 
                 <div class="form-group">
+                    <label for="agency_vendor_id">Agency / Vendor <span style="color:var(--text-muted); font-weight:400;">(optional)</span></label>
+                    <select id="agency_vendor_id" name="agency_vendor_id" class="{{ $errors->has('agency_vendor_id') ? 'input-error' : '' }}">
+                        <option value="">— None —</option>
+                        @foreach($agencyVendors as $av)
+                            <option value="{{ $av->id }}" {{ old('agency_vendor_id') == $av->id ? 'selected' : '' }}>
+                                {{ $av->name }} ({{ $av->type }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('agency_vendor_id')<span class="field-error">{{ $message }}</span>@enderror
+                </div>
+
+                <div class="form-group">
                     <label for="note">Note</label>
                     <textarea id="note" name="note" placeholder="Optional details about this expense…" maxlength="1000">{{ old('note') }}</textarea>
                     @error('note')<span class="field-error">{{ $message }}</span>@enderror

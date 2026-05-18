@@ -50,6 +50,19 @@ class UserController extends Controller
             ->orderBy('name')
             ->get();
 
+        // ── Agency Vendors data for the agency vendors tab ────────────────────
+        $avSearch = $request->input('av_search', '');
+        
+        $agencyVendors = \App\Models\AgencyVendor::query()
+            ->withSum('expenses', 'amount')
+            ->when($avSearch, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('contact_person', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->paginate(10, ['*'], 'av_page');
+
         return view('auth.dashboard', [
             'user'              => Auth::user(),
             'users'             => $users,
@@ -60,6 +73,8 @@ class UserController extends Controller
             'expenseSearch'     => $expenseSearch,
             'expenseStatus'     => $expenseStatus,
             'categories'        => $categories,
+            'agencyVendors'     => $agencyVendors,
+            'avSearch'          => $avSearch,
         ]);
     }
 

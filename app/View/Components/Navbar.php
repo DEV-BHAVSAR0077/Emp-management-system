@@ -17,6 +17,7 @@ class Navbar extends Component
     public $rolesTabActive;
     public $expensesTabActive;
     public $categoriesTabActive;
+    public $agencyVendorsTabActive;
 
     /**
      * Create a new component instance.
@@ -39,17 +40,27 @@ class Navbar extends Component
             $this->rolesTabActive = false;
             $this->expensesTabActive = false;
             $this->categoriesTabActive = false;
+            $this->agencyVendorsTabActive = false;
         } elseif (in_array($route, ['roles.create', 'roles.edit'])) {
             $this->rolesTabActive = true;
             $this->dashTabActive = false;
             $this->empTabActive = false;
             $this->expensesTabActive = false;
             $this->categoriesTabActive = false;
+            $this->agencyVendorsTabActive = false;
         } elseif (in_array($route, ['expenses.create', 'expenses.edit'])) {
             $this->expensesTabActive = true;
             $this->dashTabActive = false;
             $this->empTabActive = false;
             $this->rolesTabActive = false;
+            $this->categoriesTabActive = false;
+            $this->agencyVendorsTabActive = false;
+        } elseif (in_array($route, ['agency_vendors.create', 'agency_vendors.edit'])) {
+            $this->agencyVendorsTabActive = true;
+            $this->dashTabActive = false;
+            $this->empTabActive = false;
+            $this->rolesTabActive = false;
+            $this->expensesTabActive = false;
             $this->categoriesTabActive = false;
         } else {
             // Dashboard route logic
@@ -57,7 +68,8 @@ class Navbar extends Component
             $this->rolesTabActive = $tab === 'roles';
             $this->expensesTabActive = $tab === 'expenses' || request()->has('expense_search') || request()->has('expense_page');
             $this->categoriesTabActive = $tab === 'categories';
-            $this->dashTabActive = !$this->empTabActive && !$this->rolesTabActive && !$this->expensesTabActive && !$this->categoriesTabActive;
+            $this->agencyVendorsTabActive = $tab === 'agency_vendors' || request()->has('av_search') || request()->has('av_page');
+            $this->dashTabActive = !$this->empTabActive && !$this->rolesTabActive && !$this->expensesTabActive && !$this->categoriesTabActive && !$this->agencyVendorsTabActive;
         }
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgencyVendor;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\SubCategory;
@@ -31,6 +32,7 @@ class ExpenseController extends Controller
             ],
             'expense_date'             => 'required|date',
             'note'                     => 'nullable|string|max:1000',
+            'agency_vendor_id'         => 'nullable|exists:agency_vendors,id',
         ];
     }
 
@@ -49,6 +51,7 @@ class ExpenseController extends Controller
             'expense_date.required'            => 'Expense date is required.',
             'expense_date.date'                => 'Please enter a valid date.',
             'note.max'                         => 'Note may not exceed 1000 characters.',
+            'agency_vendor_id.exists'          => 'The selected agency/vendor is invalid.',
         ];
     }
 
@@ -61,11 +64,13 @@ class ExpenseController extends Controller
     // Show the form for creating a new expense.
     public function create()
     {
-        $categories = Category::with('subCategories')->orderBy('name')->get();
+        $categories    = Category::with('subCategories')->orderBy('name')->get();
+        $agencyVendors = AgencyVendor::orderBy('name')->get();
 
         return view('expenses.create_expense', [
-            'user'       => Auth::user(),
-            'categories' => $categories,
+            'user'          => Auth::user(),
+            'categories'    => $categories,
+            'agencyVendors' => $agencyVendors,
         ]);
     }
 
@@ -78,6 +83,7 @@ class ExpenseController extends Controller
             'user_id'                  => Auth::id(),
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
+            'agency_vendor_id'         => $request->agency_vendor_id ?: null,
             'name'                     => $request->name,
             'amount'                   => $request->amount,
             'expense_date'             => $request->expense_date,
@@ -91,14 +97,15 @@ class ExpenseController extends Controller
     // Show the form for editing the specified expense.
     public function edit(Expense $expense)
     {
-        $authUser = Auth::user();
-
-        $categories = Category::with('subCategories')->orderBy('name')->get();
+        $authUser      = Auth::user();
+        $categories    = Category::with('subCategories')->orderBy('name')->get();
+        $agencyVendors = AgencyVendor::orderBy('name')->get();
 
         return view('expenses.edit_expense', [
-            'user'       => $authUser,
-            'expense'    => $expense,
-            'categories' => $categories,
+            'user'          => $authUser,
+            'expense'       => $expense,
+            'categories'    => $categories,
+            'agencyVendors' => $agencyVendors,
         ]);
     }
 
@@ -110,6 +117,7 @@ class ExpenseController extends Controller
         $expense->update([
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
+            'agency_vendor_id'         => $request->agency_vendor_id ?: null,
             'name'                     => $request->name,
             'amount'                   => $request->amount,
             'expense_date'             => $request->expense_date,
