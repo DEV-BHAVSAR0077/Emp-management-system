@@ -23,10 +23,14 @@
                 </div>
                 
                 <div class="form-group">
+                    @php
+                        $types = App\Models\AgencyVendor::TYPES;
+                    @endphp
                     <label for="type">Type</label>
                     <select id="type" name="type" class="{{ $errors->has('type') ? 'input-error' : '' }}">
-                        <option value="Agency" {{ old('type', $agencyVendor->type) === 'Agency' ? 'selected' : '' }}>Agency</option>
-                        <option value="Vendor" {{ old('type', $agencyVendor->type) === 'Vendor' ? 'selected' : '' }}>Vendor</option>
+                        @foreach ($types as $key => $value)
+                            <option value="{{ $key }}" {{ old('type', $agencyVendor->type) == $key ? 'selected' : '' }}>{{ $value }}</option>
+                        @endforeach
                     </select>
                     @error('type')<span class="field-error">{{ $message }}</span>@enderror
                 </div>

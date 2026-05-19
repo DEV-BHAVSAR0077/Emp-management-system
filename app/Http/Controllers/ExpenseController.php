@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ExpanceRequest;
 use App\Models\AgencyVendor;
 use App\Models\Category;
 use App\Models\Expense;
@@ -11,49 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ExpenseController extends Controller
 {
-    // Shared validation rules for store and update
-    private function validationRules(Request $request): array
-    {
-        return [
-            'name'                     => 'required|string|max:150',
-            'amount'                   => 'required|numeric|min:0.01|max:9999999999.99',
-            'expense_category_id'      => 'required|exists:categories,id',
-            'expense_sub_category_id'  => [
-                'nullable',
-                'exists:sub_categories,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value) {
-                        $sub = SubCategory::find($value);
-                        if (!$sub || $sub->category_id != $request->expense_category_id) {
-                            $fail('The selected sub-category does not belong to the chosen category.');
-                        }
-                    }
-                },
-            ],
-            'expense_date'             => 'required|date',
-            'note'                     => 'nullable|string|max:1000',
-            'agency_vendor_id'         => 'nullable|exists:agency_vendors,id',
-        ];
-    }
 
-    // Custom validation messages
-    private function validationMessages(): array
-    {
-        return [
-            'name.required'                    => 'Expense name is required.',
-            'name.max'                         => 'Expense name may not exceed 150 characters.',
-            'amount.required'                  => 'Amount is required.',
-            'amount.numeric'                   => 'Amount must be a valid number.',
-            'amount.min'                       => 'Amount must be at least 0.01.',
-            'expense_category_id.required'     => 'Please select a category.',
-            'expense_category_id.exists'       => 'The selected category is invalid.',
-            'expense_sub_category_id.exists'   => 'The selected sub-category is invalid.',
-            'expense_date.required'            => 'Expense date is required.',
-            'expense_date.date'                => 'Please enter a valid date.',
-            'note.max'                         => 'Note may not exceed 1000 characters.',
-            'agency_vendor_id.exists'          => 'The selected agency/vendor is invalid.',
-        ];
-    }
 
     // Redirect to dashboard with expenses tab active.
     public function index()
@@ -75,9 +34,8 @@ class ExpenseController extends Controller
     }
 
     // Store a newly created expense.
-    public function store(Request $request)
+    public function store(ExpanceRequest $request)
     {
-        $request->validate($this->validationRules($request), $this->validationMessages());
 
         Expense::create([
             'user_id'                  => Auth::id(),
@@ -110,9 +68,8 @@ class ExpenseController extends Controller
     }
 
     // Update the specified expense.
-    public function update(Request $request, Expense $expense)
+    public function update(ExpanceRequest $request, Expense $expense)
     {
-        $request->validate($this->validationRules($request), $this->validationMessages());
 
         $expense->update([
             'expense_category_id'      => $request->expense_category_id,
@@ -137,10 +94,8 @@ class ExpenseController extends Controller
     }
 
     // Restore a soft-deleted expense.
-    public function restore($id)
+    public function restore(Expense $expense)
     {
-        $expense = Expense::onlyTrashed()->findOrFail($id);
-
         $expense->restore();
 
         return back()->with('success', 'Expense restored successfully.');

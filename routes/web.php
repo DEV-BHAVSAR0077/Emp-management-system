@@ -106,7 +106,7 @@ Route::middleware('auth')->group(function () {
          ->name('expenses.destroy')->middleware('permission:delete-expense,expense');
 
     Route::post('/expenses/{expense}/restore', [ExpenseController::class, 'restore'])
-         ->name('expenses.restore')->middleware('permission:delete-expense,expense');
+         ->name('expenses.restore')->middleware('permission:delete-expense,expense')->withTrashed();
 
     // ── Category Module ───────────────────────────────────────────────────
     Route::get('/categories/create', [CategoryController::class, 'create'])

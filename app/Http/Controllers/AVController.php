@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgencyVendor;
+use App\Http\Requests\AVStoreRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -19,17 +20,6 @@ class AVController extends Controller implements HasMiddleware
         ];
     }
 
-    private function validationRules(): array
-    {
-        return [
-            'name'           => 'required|string|max:150',
-            'type'           => 'required|string|in:Agency,Vendor',
-            'email'          => 'nullable|email|max:150',
-            'phone_number'   => 'nullable|string|max:20',
-            'contact_person' => 'nullable|string|max:150',
-        ];
-    }
-
     public function index()
     {
         return redirect()->route('dashboard', ['tab' => 'agency_vendors']);
@@ -42,9 +32,8 @@ class AVController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(Request $request)
+    public function store(AVStoreRequest $request)
     {
-        $request->validate($this->validationRules());
 
         AgencyVendor::create($request->only([
             'name', 'type', 'email', 'phone_number', 'contact_person'
@@ -62,9 +51,8 @@ class AVController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(Request $request, AgencyVendor $agencyVendor)
-    {
-        $request->validate($this->validationRules());
+    public function update(AVStoreRequest $request, AgencyVendor $agencyVendor)
+     {
 
         $agencyVendor->update($request->only([
             'name', 'type', 'email', 'phone_number', 'contact_person'

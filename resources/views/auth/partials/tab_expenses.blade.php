@@ -47,7 +47,6 @@
                         <th>Amount</th>
                         <th>Category</th>
                         <th>Date</th>
-                        <th>Logged By</th>
                         <th style="text-align:center;">Actions</th>
                     </tr>
                 </thead>
@@ -73,18 +72,29 @@
                         </td>
                         <td style="color:var(--text-muted);">{{ $exp->expense_date->format('d M Y') }}</td>
                         <td>
-                            <div class="user-cell">
-                                <div class="avatar" style="width:28px; height:28px; font-size:.68rem;">{{ mb_substr($exp->user->name, 0, 2) }}</div>
-                                <div style="font-size:.84rem; font-weight:500;">
-                                    {{ $exp->user->name }}
-                                    @if($exp->user_id === Auth::id())
-                                        <span class="badge badge-you" style="font-size:.65rem;">You</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </td>
-                        <td>
                             <div class="actions-cell" style="justify-content:center;">
+
+                                {{-- View Button (always visible for anyone who can view expenses) --}}
+                                <button type="button"
+                                    class="btn btn-ghost btn-sm btn-view-expense"
+                                    id="btn-view-expense-{{ $exp->id }}"
+                                    title="View expense details"
+                                    data-id="{{ $exp->id }}"
+                                    data-name="{{ e($exp->name) }}"
+                                    data-amount="{{ number_format($exp->amount, 2) }}"
+                                    data-date="{{ $exp->expense_date->format('d M Y') }}"
+                                    data-category="{{ $exp->category?->name ?? '—' }}"
+                                    data-subcategory="{{ $exp->subCategory?->name ?? '—' }}"
+                                    data-vendor="{{ $exp->agencyVendor?->name ?? '—' }}"
+                                    data-note="{{ e($exp->note ?? '—') }}"
+                                    data-user="{{ e($exp->user?->name ?? '—') }}"
+                                    data-user-initials="{{ mb_strtoupper(mb_substr($exp->user?->name ?? '?', 0, 2)) }}"
+                                    data-is-you="{{ $exp->user_id === Auth::id() ? '1' : '0' }}"
+                                    data-trashed="{{ $exp->trashed() ? '1' : '0' }}">
+                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41z" clip-rule="evenodd"/></svg>
+                                    View
+                                </button>
+
                                 @if($exp->trashed())
                                     @if($user->hasPermission('delete-expense') || $exp->user_id === Auth::id())
                                     <form method="POST" action="{{ route('expenses.restore', $exp->id) }}" id="form-restore-expense-{{ $exp->id }}" style="display:inline;">
@@ -111,10 +121,6 @@
                                         </button>
                                     </form>
                                     @endif
-                                @endif
-                                
-                                @if(!$user->hasPermission('edit-expense') && !$user->hasPermission('delete-expense') && $exp->user_id !== Auth::id())
-                                    <span style="font-size:.75rem; color:var(--text-muted);">—</span>
                                 @endif
                             </div>
                         </td>
@@ -154,4 +160,153 @@
         @endif
     </div>
 </div>
+
+{{-- ═══════════ Expense View Modal ═══════════ --}}
+<div id="modal-view-expense" style="display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;">
+    {{-- Backdrop --}}
+    <div id="modal-expense-backdrop" style="position:absolute; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(3px);"></div>
+
+    {{-- Dialog --}}
+    <div id="modal-expense-dialog" style="
+        position:relative; z-index:1; background:var(--card-bg, #fff);
+        border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+        width:100%; max-width:500px; margin:1rem;
+        animation:modalSlideIn .2s ease;
+    ">
+        {{-- Header --}}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color, #e5e7eb);">
+            <div style="display:flex; align-items:center; gap:.6rem;">
+                <div style="width:36px; height:36px; border-radius:8px; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center;">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="white"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41z" clip-rule="evenodd"/></svg>
+                </div>
+                <div>
+                    <div style="font-weight:700; font-size:1rem; color:var(--text-color);">Expense Details</div>
+                    <div id="modal-expense-trashed-badge" style="display:none; font-size:.7rem; color:#ef4444; font-weight:600; margin-top:.1rem;">● Deleted</div>
+                </div>
+            </div>
+            <button type="button" id="btn-close-expense-modal" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; border-radius:6px;" title="Close">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+            </button>
+        </div>
+
+        {{-- Body --}}
+        <div style="padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
+
+            {{-- Amount Hero --}}
+            <div style="text-align:center; padding:1.25rem; background:linear-gradient(135deg,#f0f0ff,#f5f0ff); border-radius:10px;">
+                <div style="font-size:.75rem; color:#7c3aed; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.25rem;">Total Amount</div>
+                <div id="modal-expense-amount" style="font-size:2rem; font-weight:800; color:#4f46e5;">₹0.00</div>
+            </div>
+
+            {{-- Detail Grid --}}
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:.75rem;">
+
+                <div style="background:var(--hover-bg, #f9fafb); border-radius:8px; padding:.75rem;">
+                    <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;">Expense Name</div>
+                    <div id="modal-expense-name" style="font-weight:600; font-size:.92rem; color:var(--text-color); word-break:break-word;"></div>
+                </div>
+
+                <div style="background:var(--hover-bg, #f9fafb); border-radius:8px; padding:.75rem;">
+                    <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;">Date</div>
+                    <div id="modal-expense-date" style="font-weight:600; font-size:.92rem; color:var(--text-color);"></div>
+                </div>
+
+                <div style="background:var(--hover-bg, #f9fafb); border-radius:8px; padding:.75rem;">
+                    <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;">Category</div>
+                    <div id="modal-expense-category" style="font-weight:600; font-size:.92rem; color:var(--text-color);"></div>
+                </div>
+
+                <div style="background:var(--hover-bg, #f9fafb); border-radius:8px; padding:.75rem;">
+                    <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;">Sub-Category</div>
+                    <div id="modal-expense-subcategory" style="font-weight:600; font-size:.92rem; color:var(--text-color);"></div>
+                </div>
+
+                <div style="background:var(--hover-bg, #f9fafb); border-radius:8px; padding:.75rem; grid-column:1 / -1;">
+                    <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;">Agency / Vendor</div>
+                    <div id="modal-expense-vendor" style="font-weight:600; font-size:.92rem; color:var(--text-color);"></div>
+                </div>
+
+            </div>
+
+            {{-- Note --}}
+            <div style="background:var(--hover-bg, #f9fafb); border-radius:8px; padding:.75rem;">
+                <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.3rem;">Note</div>
+                <div id="modal-expense-note" style="font-size:.9rem; color:var(--text-color); line-height:1.5; white-space:pre-wrap; word-break:break-word;"></div>
+            </div>
+
+            {{-- Logged By --}}
+            <div style="display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; background:var(--hover-bg, #f9fafb); border-radius:8px;">
+                <div id="modal-expense-avatar" style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#fff; flex-shrink:0;"></div>
+                <div>
+                    <div style="font-size:.7rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em;">Logged By</div>
+                    <div style="display:flex; align-items:center; gap:.4rem; margin-top:.15rem;">
+                        <span id="modal-expense-user" style="font-weight:600; font-size:.92rem; color:var(--text-color);"></span>
+                        <span id="modal-expense-you-badge" style="display:none; font-size:.65rem; font-weight:700; background:#e0e7ff; color:#4338ca; border-radius:4px; padding:.1rem .35rem;">YOU</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        {{-- Footer --}}
+        <div style="padding:1rem 1.5rem; border-top:1px solid var(--border-color, #e5e7eb); display:flex; justify-content:flex-end;">
+            <button type="button" id="btn-close-expense-modal-footer" class="btn btn-ghost">Close</button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes modalSlideIn {
+    from { opacity:0; transform:translateY(-16px) scale(.97); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+}
+</style>
+
+<script>
+(function () {
+    const modal    = document.getElementById('modal-view-expense');
+    const backdrop = document.getElementById('modal-expense-backdrop');
+
+    function openExpenseModal(btn) {
+        document.getElementById('modal-expense-amount').textContent      = '₹' + btn.dataset.amount;
+        document.getElementById('modal-expense-name').textContent        = btn.dataset.name;
+        document.getElementById('modal-expense-date').textContent        = btn.dataset.date;
+        document.getElementById('modal-expense-category').textContent    = btn.dataset.category;
+        document.getElementById('modal-expense-subcategory').textContent = btn.dataset.subcategory;
+        document.getElementById('modal-expense-vendor').textContent      = btn.dataset.vendor;
+        document.getElementById('modal-expense-note').textContent        = btn.dataset.note;
+        document.getElementById('modal-expense-user').textContent        = btn.dataset.user;
+        document.getElementById('modal-expense-avatar').textContent      = btn.dataset.userInitials;
+
+        const youBadge = document.getElementById('modal-expense-you-badge');
+        youBadge.style.display = btn.dataset.isYou === '1' ? 'inline' : 'none';
+
+        const trashedBadge = document.getElementById('modal-expense-trashed-badge');
+        trashedBadge.style.display = btn.dataset.trashed === '1' ? 'block' : 'none';
+
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeExpenseModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // Bind view buttons
+    document.querySelectorAll('.btn-view-expense').forEach(function (btn) {
+        btn.addEventListener('click', function () { openExpenseModal(btn); });
+    });
+
+    // Close triggers
+    document.getElementById('btn-close-expense-modal').addEventListener('click', closeExpenseModal);
+    document.getElementById('btn-close-expense-modal-footer').addEventListener('click', closeExpenseModal);
+    backdrop.addEventListener('click', closeExpenseModal);
+
+    // ESC key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') closeExpenseModal();
+    });
+})();
+</script>
 @endcan

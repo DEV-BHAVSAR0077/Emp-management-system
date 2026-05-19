@@ -11,6 +11,14 @@ class AgencyVendor extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const TYPE_AGENCY = 0;
+    public const TYPE_VENDOR = 1;
+
+    public const TYPES = [
+        self::TYPE_AGENCY => 'Agency',
+        self::TYPE_VENDOR => 'Vendor',
+    ];  
+
     protected $fillable = [
         'name',
         'type',
