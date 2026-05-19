@@ -91,7 +91,7 @@
                                     data-user-initials="{{ mb_strtoupper(mb_substr($exp->user?->name ?? '?', 0, 2)) }}"
                                     data-is-you="{{ $exp->user_id === Auth::id() ? '1' : '0' }}"
                                     data-trashed="{{ $exp->trashed() ? '1' : '0' }}">
-                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41z" clip-rule="evenodd"/></svg>
+                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
                                     View
                                 </button>
 
@@ -177,16 +177,16 @@
         <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color, #e5e7eb);">
             <div style="display:flex; align-items:center; gap:.6rem;">
                 <div style="width:36px; height:36px; border-radius:8px; background:linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center;">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="white"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41z" clip-rule="evenodd"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="white"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
                 </div>
                 <div>
                     <div style="font-weight:700; font-size:1rem; color:var(--text-color);">Expense Details</div>
                     <div id="modal-expense-trashed-badge" style="display:none; font-size:.7rem; color:#ef4444; font-weight:600; margin-top:.1rem;">● Deleted</div>
                 </div>
             </div>
-            <button type="button" id="btn-close-expense-modal" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; border-radius:6px;" title="Close">
+            <!-- <button type="button" id="btn-close-expense-modal" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; border-radius:6px;" title="Close">
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
-            </button>
+            </button> -->
         </div>
 
         {{-- Body --}}
@@ -299,7 +299,7 @@
     });
 
     // Close triggers
-    document.getElementById('btn-close-expense-modal').addEventListener('click', closeExpenseModal);
+    // document.getElementById('btn-close-expense-modal').addEventListener('click', closeExpenseModal);
     document.getElementById('btn-close-expense-modal-footer').addEventListener('click', closeExpenseModal);
     backdrop.addEventListener('click', closeExpenseModal);
 
