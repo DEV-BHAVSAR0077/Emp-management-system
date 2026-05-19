@@ -21,9 +21,24 @@ class AVController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return redirect()->route('dashboard', ['tab' => 'agency_vendors']);
+        $avSearch = $request->input('av_search', '');
+        
+        $agencyVendors = AgencyVendor::query()
+            ->withSum('expenses', 'amount')
+            ->when($avSearch, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('contact_person', 'like', "%{$search}%");
+            })
+            ->orderBy('name')
+            ->paginate(10, ['*'], 'av_page');
+
+        return view('agency_vendors.index', [
+            'agencyVendors' => $agencyVendors,
+            'avSearch'      => $avSearch,
+        ]);
     }
 
     public function create()
@@ -40,7 +55,7 @@ class AVController extends Controller implements HasMiddleware
             'name', 'type', 'email', 'phone_number', 'contact_person'
         ]));
 
-        return redirect()->route('dashboard', ['tab' => 'agency_vendors'])
+        return redirect()->route('agency_vendors.index')
                          ->with('success', 'Agency/Vendor created successfully.');
     }
 
@@ -59,7 +74,7 @@ class AVController extends Controller implements HasMiddleware
             'name', 'type', 'email', 'phone_number', 'contact_person'
         ]));
 
-        return redirect()->route('dashboard', ['tab' => 'agency_vendors'])
+        return redirect()->route('agency_vendors.index')
                          ->with('success', 'Agency/Vendor updated successfully.');
     }
 

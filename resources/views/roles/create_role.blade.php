@@ -160,8 +160,12 @@
                             const v = getCheckbox('view-expense');
                             if(v) v.checked = true;
                         }
+                        if (['create-agency-vendor', 'edit-agency-vendor', 'delete-agency-vendor'].includes(pName)) {
+                            const v = getCheckbox('view-agency-vendor');
+                            if(v) v.checked = true;
+                        }
                     }
-
+ 
                     // Unchecking 'view' automatically unchecks create/edit/delete
                     if (!this.checked) {
                         if (pName === 'view-user') {
@@ -184,6 +188,12 @@
                         }
                         if (pName === 'view-expense') {
                             ['create-expense', 'edit-expense', 'delete-expense'].forEach(n => {
+                                const c = getCheckbox(n);
+                                if(c) c.checked = false;
+                            });
+                        }
+                        if (pName === 'view-agency-vendor') {
+                            ['create-agency-vendor', 'edit-agency-vendor', 'delete-agency-vendor'].forEach(n => {
                                 const c = getCheckbox(n);
                                 if(c) c.checked = false;
                             });
