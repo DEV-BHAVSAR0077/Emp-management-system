@@ -68,7 +68,7 @@
                             <div style="font-size: 0.85rem;">
                                 @if($av->email)<div>{{ $av->email }}</div>@endif
                                 @if($av->phone_number)<div style="color:var(--text-muted);">{{ $av->phone_number }}</div>@endif
-                                @if($av->contact_person)<div style="color:var(--text-muted);">Attn: {{ $av->contact_person }}</div>@endif
+                                @if($av->contact_person)<div style="color:var(--text-muted);">Contact Person: {{ $av->contact_person }}</div>@endif
                             </div>
                         </td>
                         <td>

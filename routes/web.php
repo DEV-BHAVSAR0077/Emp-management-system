@@ -133,20 +133,6 @@ Route::middleware('auth')->group(function () {
     // ── Agency & Vendor Module ────────────────────────────────────────────
     Route::resource('agency-vendors', AVController::class)
          ->only(['create', 'store', 'edit', 'update', 'destroy'])
-         ->parameters(['agency-vendors' => 'agencyVendor'])
-         ->middleware([
-             'create'  => 'permission:create-agency-vendor',
-             'store'   => 'permission:create-agency-vendor',
-             'edit'    => 'permission:edit-agency-vendor',
-             'update'  => 'permission:edit-agency-vendor',
-             'destroy' => 'permission:delete-agency-vendor',
-         ])
-         ->names([
-             'create'  => 'agency_vendors.create',
-             'store'   => 'agency_vendors.store',
-             'edit'    => 'agency_vendors.edit',
-             'update'  => 'agency_vendors.update',
-             'destroy' => 'agency_vendors.destroy',
-         ]);
+         ->names('agency_vendors');
 
 });

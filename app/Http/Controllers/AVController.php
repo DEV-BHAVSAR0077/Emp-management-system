@@ -5,9 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\AgencyVendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class AVController extends Controller
+class AVController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:create-agency-vendor', only: ['create', 'store']),
+            new Middleware('permission:edit-agency-vendor', only: ['edit', 'update']),
+            new Middleware('permission:delete-agency-vendor', only: ['destroy']),
+        ];
+    }
+
     private function validationRules(): array
     {
         return [
