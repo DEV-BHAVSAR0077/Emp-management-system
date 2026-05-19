@@ -15,6 +15,7 @@ class Expense extends Model
         'user_id',
         'expense_category_id',
         'expense_sub_category_id',
+        'agency_vendor_id',
         'name',
         'amount',
         'note',
@@ -45,5 +46,11 @@ class Expense extends Model
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(SubCategory::class, 'expense_sub_category_id')->withTrashed();
+    }
+
+    // Agency or Vendor this expense belongs to (optional)
+    public function agencyVendor(): BelongsTo
+    {
+        return $this->belongsTo(AgencyVendor::class, 'agency_vendor_id')->withTrashed();
     }
 }

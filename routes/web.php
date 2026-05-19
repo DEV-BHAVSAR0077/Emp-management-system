@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AVController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -112,7 +113,7 @@ Route::middleware('auth')->group(function () {
          ->name('expenses.destroy')->middleware('permission:delete-expense,expense');
 
     Route::post('/expenses/{expense}/restore', [ExpenseController::class, 'restore'])
-         ->name('expenses.restore')->middleware('permission:delete-expense,expense');
+         ->name('expenses.restore')->middleware('permission:delete-expense,expense')->withTrashed();
 
     // ── Category Module ───────────────────────────────────────────────────
     Route::get('/categories', [CategoryController::class, 'index'])
@@ -139,5 +140,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/categories/{category}/sub-categories', [CategoryController::class, 'getSubCategories'])
          ->name('categories.subs');
 
+    // ── Agency & Vendor Module ────────────────────────────────────────────
+    Route::resource('agency-vendors', AVController::class)
+         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+         ->names('agency_vendors');
 
 });

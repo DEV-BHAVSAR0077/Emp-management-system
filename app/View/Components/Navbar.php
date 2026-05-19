@@ -17,6 +17,7 @@ class Navbar extends Component
     public $rolesTabActive;
     public $expensesTabActive;
     public $categoriesTabActive;
+    public $agencyVendorsTabActive;
 
     /**
      * Create a new component instance.
@@ -32,11 +33,12 @@ class Navbar extends Component
         // Determine active tab based on route and request parameters
         $route = request()->route()->getName() ?? '';
 
-        $this->empTabActive        = str_starts_with($route, 'users.');
-        $this->rolesTabActive      = str_starts_with($route, 'roles.');
-        $this->expensesTabActive   = str_starts_with($route, 'expenses.');
-        $this->categoriesTabActive = str_starts_with($route, 'categories.');
-        $this->dashTabActive       = $route === 'dashboard';
+        $this->empTabActive           = str_starts_with($route, 'users.');
+        $this->rolesTabActive         = str_starts_with($route, 'roles.');
+        $this->expensesTabActive      = str_starts_with($route, 'expenses.');
+        $this->categoriesTabActive    = str_starts_with($route, 'categories.');
+        $this->agencyVendorsTabActive = str_starts_with($route, 'agency_vendors.');
+        $this->dashTabActive          = $route === 'dashboard';
     }
 
     /**
