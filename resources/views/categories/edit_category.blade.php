@@ -7,9 +7,9 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Edit Category</h2>
-            <div class="panel-actions">
+            <!-- <div class="panel-actions">
                 <a href="{{ route('dashboard', ['tab' => 'categories']) }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
-            </div>
+            </div> -->
         </div>
         <div class="panel-body">
             @if ($errors->any())
@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="{{ route('dashboard', ['tab' => 'categories']) }}" class="btn btn-ghost">Cancel</a>
+                    <a href="{{ route('categories.index') }}" class="btn btn-ghost">Cancel</a>
                     <button type="submit" class="btn btn-primary">Update Category</button>
                 </div>
             </form>

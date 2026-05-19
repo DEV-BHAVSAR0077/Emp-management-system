@@ -7,9 +7,9 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Add New Expense</h2>
-            <div class="panel-actions">
+            <!-- <div class="panel-actions">
                 <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
-            </div>
+            </div> -->
         </div>
         <div class="panel-body">
             <form method="POST" action="{{ route('expenses.store') }}" novalidate>
@@ -60,7 +60,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" class="btn btn-ghost">Cancel</a>
+                    <a href="{{ route('expenses.index') }}" class="btn btn-ghost">Cancel</a>
                     <button type="submit" class="btn btn-primary" id="btn-create-expense">
                         <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
                         Create Expense

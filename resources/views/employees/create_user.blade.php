@@ -7,9 +7,9 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Add New User</h2>
-            <div class="panel-actions">
+            <!-- <div class="panel-actions">
                 <a href="{{ route('dashboard', ['tab' => 'emp']) }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
-            </div>
+            </div> -->
         </div>
         <div class="panel-body">
             <form method="POST" action="{{ route('users.store') }}" novalidate>
@@ -55,7 +55,7 @@
                 @endcan
 
                 <div class="form-actions">
-                    <a href="{{ route('dashboard', ['tab' => 'emp']) }}" class="btn btn-ghost">Cancel</a>
+                    <a href="{{ route('users.index') }}" class="btn btn-ghost">Cancel</a>
                     <button type="submit" class="btn btn-primary">Create User</button>
                 </div>
             </form>

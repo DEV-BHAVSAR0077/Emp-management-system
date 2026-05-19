@@ -7,9 +7,9 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Add Agency/Vendor</h2>
-            <div class="panel-actions">
-                <a href="{{ route('dashboard', ['tab' => 'agency_vendors']) }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
-            </div>
+            <!-- <div class="panel-actions">
+                <a href="{{ route('agency_vendors.index') }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
+            </div> -->
         </div>
         <div class="panel-body">
             <form method="POST" action="{{ route('agency_vendors.store') }}" novalidate>
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="{{ route('dashboard', ['tab' => 'agency_vendors']) }}" class="btn btn-ghost">Cancel</a>
+                    <a href="{{ route('agency_vendors.index') }}" class="btn btn-ghost">Cancel</a>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>

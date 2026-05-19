@@ -7,9 +7,9 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Edit Expense: {{ $expense->name }}</h2>
-            <div class="panel-actions">
+            <!-- <div class="panel-actions">
                 <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" class="btn btn-ghost btn-sm">Back to Dashboard</a>
-            </div>
+            </div> -->
         </div>
         <div class="panel-body">
             <form method="POST" action="{{ route('expenses.update', $expense) }}" novalidate>
@@ -61,7 +61,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="{{ route('dashboard', ['tab' => 'expenses']) }}" class="btn btn-ghost">Cancel</a>
+                    <a href="{{ route('expenses.index') }}" class="btn btn-ghost">Cancel</a>
                     <button type="submit" class="btn btn-primary" id="btn-update-expense">Save Changes</button>
                 </div>
             </form>
