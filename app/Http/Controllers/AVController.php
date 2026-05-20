@@ -27,6 +27,7 @@ class AVController extends Controller implements HasMiddleware
         
         $agencyVendors = AgencyVendor::query()
             ->withSum('expenses', 'amount')
+            ->withSum('payments', 'amount')
             ->when($avSearch, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%")

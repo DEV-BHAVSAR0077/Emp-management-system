@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AVController;
@@ -144,5 +145,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('agency-vendors', AVController::class)
          ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
          ->names('agency_vendors');
+
+    // ── Payment Module ────────────────────────────────────────────────────
+    Route::resource('payments', PaymentController::class)
+         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+         ->names('payments');
 
 });

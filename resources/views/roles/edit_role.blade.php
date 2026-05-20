@@ -221,6 +221,10 @@
                             const v = getCheckbox('view-agency-vendor');
                             if(v) v.checked = true;
                         }
+                        if (['create-payment', 'edit-payment', 'delete-payment'].includes(pName)) {
+                            const v = getCheckbox('view-payment');
+                            if(v) v.checked = true;
+                        }
                     }
 
                     // Unchecking 'view' automatically unchecks create/edit/delete
@@ -251,6 +255,12 @@
                         }
                         if (pName === 'view-agency-vendor') {
                             ['create-agency-vendor', 'edit-agency-vendor', 'delete-agency-vendor'].forEach(n => {
+                                const c = getCheckbox(n);
+                                if(c) c.checked = false;
+                            });
+                        }
+                        if (pName === 'view-payment') {
+                            ['create-payment', 'edit-payment', 'delete-payment'].forEach(n => {
                                 const c = getCheckbox(n);
                                 if(c) c.checked = false;
                             });

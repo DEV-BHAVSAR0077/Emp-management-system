@@ -22,9 +22,10 @@ class ExpenseObserver
             return;
         }
 
-        $total = Expense::where('agency_vendor_id', $agencyVendorId)->sum('amount');
+        $totalExpenses = Expense::where('agency_vendor_id', $agencyVendorId)->sum('amount');
+        $totalPayments = \App\Models\Payment::where('agency_vendor_id', $agencyVendorId)->sum('amount');
 
-        $vendor->balance = $total;
+        $vendor->balance = $totalExpenses - $totalPayments;
         $vendor->saveQuietly(); // saveQuietly avoids triggering Vendor observers
     }
 

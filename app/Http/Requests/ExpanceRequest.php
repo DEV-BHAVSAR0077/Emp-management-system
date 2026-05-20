@@ -40,7 +40,7 @@ class ExpanceRequest extends FormRequest
             ],
             'expense_date'             => 'required|date',
             'note'                     => 'nullable|string|max:1000',
-            'agency_vendor_id'         => 'nullable|exists:agency_vendors,id',
+            'agency_vendor_id'         => 'required|exists:agency_vendors,id',
         ];
     }
 
@@ -63,6 +63,7 @@ class ExpanceRequest extends FormRequest
             'expense_date.required'            => 'Expense date is required.',
             'expense_date.date'                => 'Please enter a valid date.',
             'note.max'                         => 'Note may not exceed 1000 characters.',
+            'agency_vendor_id.required'        => 'Please select an agency or vendor.',
             'agency_vendor_id.exists'          => 'The selected agency/vendor is invalid.',
         ];
     }

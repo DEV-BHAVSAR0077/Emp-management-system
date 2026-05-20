@@ -47,7 +47,7 @@
                         <th>Name</th>
                         <th>Type</th>
                         <th>Contact</th>
-                        <th>Total Expenses</th>
+                        <th>Total Expense</th>
                         <th style="text-align:center;">Actions</th>
                     </tr>
                 </thead>
@@ -73,10 +73,18 @@
                         <td>
                             @php
                                 $rowTotal = $av->expenses_sum_amount ?? 0;
+                                $rowPaid = $av->payments_sum_amount ?? 0;
+                                $remaining = (float)$rowTotal - (float)$rowPaid;
                             @endphp
-                            <strong style="color: {{ $rowTotal > 0 ? 'var(--danger)' : 'var(--text-muted)' }}">
-                                ₹{{ number_format((float)$rowTotal, 2) }}
-                            </strong>
+                            @if ($rowPaid > $rowTotal)
+                                <strong style="color: var(--success);">
+                                    +₹{{ number_format((float)$rowPaid - (float)$rowTotal, 2) }}
+                                </strong>
+                            @else
+                                <strong style="color: {{ $remaining > 0 ? 'var(--danger)' : 'var(--text-muted)' }}">
+                                    ₹{{ number_format($remaining, 2) }}
+                                </strong>
+                            @endif
                         </td>
                         <td>
                             <div class="actions-cell" style="justify-content:center;">
@@ -107,7 +115,16 @@
                     <tr style="border-top:2px solid var(--border); background:var(--surface-alt, #f9fafb);">
                         <td colspan="4" style="padding:.75rem 1rem; font-weight:600; color:var(--text-muted); font-size:.82rem;">Page Total</td>
                         <td style="padding:.75rem 1rem; font-weight:700;">
-                            ₹{{ number_format($agencyVendors->sum('expenses_sum_amount'), 2) }}
+                            @php
+                                $totalExp = $agencyVendors->sum('expenses_sum_amount');
+                                $totalPaid = $agencyVendors->sum('payments_sum_amount');
+                                $totalRemaining = $totalExp - $totalPaid;
+                            @endphp
+                            @if ($totalPaid > $totalExp)
+                                <span style="color: var(--success);">+₹{{ number_format($totalPaid - $totalExp, 2) }}</span>
+                            @else
+                                <span style="color: {{ $totalRemaining > 0 ? 'var(--danger)' : 'var(--text-muted)' }}">₹{{ number_format($totalRemaining, 2) }}</span>
+                            @endif
                         </td>
                         <td></td>
                     </tr>

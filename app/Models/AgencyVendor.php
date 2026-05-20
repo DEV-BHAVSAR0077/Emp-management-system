@@ -50,4 +50,10 @@ class AgencyVendor extends Model
     {
         return $this->hasMany(Expense::class, 'agency_vendor_id');
     }
+
+    // Payments made to this agency/vendor
+    public function payments(): HasMany
+    {
+        return $this->hasMany(\App\Models\Payment::class, 'agency_vendor_id');
+    }
 }
