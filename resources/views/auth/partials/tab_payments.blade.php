@@ -8,15 +8,22 @@
                 <span class="badge" style="margin-left:.5rem; font-size:.72rem;">{{ $payments->total() }}</span>
             </h2>
             <div class="panel-actions">
-                <form method="GET" action="{{ route('payments.index') }}" class="search-form" id="form-payment-search">
-                    <input type="text" name="payment_search" id="input-payment-search" class="search-input" placeholder="Search payments…" value="{{ $paymentSearch }}" autocomplete="off" />
-                    @if ($paymentSearch)
-                        <a href="{{ route('payments.index') }}" class="btn btn-ghost btn-sm" id="btn-clear-payment-search" title="Clear search">✕</a>
+                <form method="GET" action="{{ route('payments.index') }}" class="search-form" id="form-payment-search" style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="text" name="payment_search" id="input-payment-search" class="search-input" placeholder="Search payments…" value="{{ $paymentSearch }}" autocomplete="off" style="max-width: 200px; height: 34px;" />
+                    
+                    <div class="search-input" style="display:flex; align-items:center; gap:0.4rem; width:auto; padding-top:0; padding-bottom:0; background:var(--bg); height: 34px;">
+                        <input type="date" name="payment_start_date" value="{{ $paymentStartDate ?? '' }}" title="Start Date" style="border:none; background:transparent; outline:none; font-family:inherit; font-size:inherit; color:var(--text); padding:0; margin:0; max-height: 34px;" />
+                        <span style="color:var(--text-muted); font-size:0.85rem;">to</span>
+                        <input type="date" name="payment_end_date" value="{{ $paymentEndDate ?? '' }}" title="End Date" style="border:none; background:transparent; outline:none; font-family:inherit; font-size:inherit; color:var(--text); padding:0; margin:0; max-height: 34px;" />
+                    </div>
+
+                    @if ($paymentSearch || !empty($paymentStartDate) || !empty($paymentEndDate))
+                        <a href="{{ route('payments.index') }}" class="btn btn-ghost btn-sm" id="btn-clear-payment-search" title="Clear filters" style="height: 34px;">✕</a>
                     @endif
-                    <button type="submit" class="btn btn-ghost btn-sm" id="btn-payment-search">Search</button>
+                    <button type="submit" class="btn btn-ghost btn-sm" id="btn-payment-search" style="height: 34px;">Filter</button>
                 </form>
                 @can('create-payment')
-                <button type="button" class="btn btn-primary btn-sm" id="btn-open-create-payment" onclick="openPaymentModal()">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-open-create-payment" style="height: 34px;" onclick="openPaymentModal()">
                     <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
                     Record Payment
                 </button>
@@ -24,9 +31,18 @@
             </div>
         </div>
 
-        @if($paymentSearch)
+        @if($paymentSearch || !empty($paymentStartDate) || !empty($paymentEndDate))
             <div style="padding:.6rem 1.75rem; font-size:.82rem; color:var(--text-muted); background:var(--info-bg); border-bottom:1px solid #bfdbfe;">
-                Showing results for <strong>"{{ $paymentSearch }}"</strong> — {{ $payments->total() }} {{ Str::plural('payment', $payments->total()) }} found.
+                Showing results 
+                @if($paymentSearch) for <strong>"{{ $paymentSearch }}"</strong> @endif
+                @if(!empty($paymentStartDate) && !empty($paymentEndDate))
+                    between <strong>{{ \Carbon\Carbon::parse($paymentStartDate)->format('d M Y') }}</strong> and <strong>{{ \Carbon\Carbon::parse($paymentEndDate)->format('d M Y') }}</strong>
+                @elseif(!empty($paymentStartDate))
+                    from <strong>{{ \Carbon\Carbon::parse($paymentStartDate)->format('d M Y') }}</strong> onwards
+                @elseif(!empty($paymentEndDate))
+                    up to <strong>{{ \Carbon\Carbon::parse($paymentEndDate)->format('d M Y') }}</strong>
+                @endif
+                — {{ $payments->total() }} {{ Str::plural('payment', $payments->total()) }} found.
             </div>
         @endif
 
@@ -180,11 +196,14 @@
                     <select id="payment_agency_vendor_id" name="agency_vendor_id" class="{{ $errors->has('agency_vendor_id') ? 'input-error' : '' }}" required>
                         <option value="">— Select an Agency / Vendor —</option>
                         @foreach($agencyVendors ?? [] as $av)
-                            <option value="{{ $av->id }}" {{ old('agency_vendor_id') == $av->id ? 'selected' : '' }}>
-                                {{ $av->name }} ({{ $av->type }})
+                            <option value="{{ $av->id }}" data-balance="{{ ($av->expenses_sum_amount ?? 0) - ($av->payments_sum_amount ?? 0) }}" {{ old('agency_vendor_id') == $av->id ? 'selected' : '' }}>
+                                {{ $av->name }} ({{ \App\Models\AgencyVendor::TYPES[$av->type] ?? $av->type }})
                             </option>
                         @endforeach
                     </select>
+                    <div id="payment_balance_display" style="display:none; font-size: 0.85rem; margin-top: 0.4rem; color: var(--text-muted);">
+                        Left to be paid: <strong id="payment_balance_amount">₹0.00</strong>
+                    </div>
                     @error('agency_vendor_id')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
@@ -253,6 +272,13 @@
             form.action = `{{ route('payments.store') }}`;
         }
 
+        // Trigger change to update balance if in create mode, or hide if in edit mode
+        if (btn) {
+            document.getElementById('payment_balance_display').style.display = 'none';
+        } else {
+            document.getElementById('payment_agency_vendor_id').dispatchEvent(new Event('change'));
+        }
+
         // Clear previous errors if we are opening a fresh modal (not on page reload)
         if (!'{{ old('modal_action') }}') {
             form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
@@ -282,6 +308,35 @@
     document.getElementById('btn-close-payment-modal').addEventListener('click', closePaymentModal);
     document.getElementById('btn-cancel-payment-modal').addEventListener('click', closePaymentModal);
     backdrop.addEventListener('click', closePaymentModal);
+
+    // Vendor change event to show left to be paid
+    document.getElementById('payment_agency_vendor_id').addEventListener('change', function() {
+        const display = document.getElementById('payment_balance_display');
+        const amountEl = document.getElementById('payment_balance_amount');
+        
+        if (document.getElementById('payment_modal_action').value !== 'create') {
+            display.style.display = 'none';
+            return;
+        }
+
+        const option = this.options[this.selectedIndex];
+        if (option.value && option.hasAttribute('data-balance')) {
+            const bal = parseFloat(option.getAttribute('data-balance'));
+            if (bal > 0) {
+                amountEl.textContent = '₹' + bal.toFixed(2);
+                amountEl.style.color = 'var(--danger)';
+            } else if (bal < 0) {
+                amountEl.textContent = '+₹' + Math.abs(bal).toFixed(2) + ' (Overpaid)';
+                amountEl.style.color = 'var(--success)';
+            } else {
+                amountEl.textContent = '₹0.00';
+                amountEl.style.color = 'var(--success)';
+            }
+            display.style.display = 'block';
+        } else {
+            display.style.display = 'none';
+        }
+    });
 
     // ESC key
     document.addEventListener('keydown', function (e) {

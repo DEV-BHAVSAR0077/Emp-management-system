@@ -29,6 +29,8 @@ class PaymentController extends Controller implements HasMiddleware
     public function index(Request $request)
     {
         $paymentSearch = $request->input('payment_search', '');
+        $paymentStartDate = $request->input('payment_start_date', '');
+        $paymentEndDate = $request->input('payment_end_date', '');
 
         $payments = Payment::with(['agencyVendor', 'user'])
             ->when($paymentSearch, function ($query, $search) {
@@ -39,16 +41,27 @@ class PaymentController extends Controller implements HasMiddleware
                       });
                 });
             })
+            ->when($paymentStartDate, function ($query, $start) {
+                $query->whereDate('payment_date', '>=', $start);
+            })
+            ->when($paymentEndDate, function ($query, $end) {
+                $query->whereDate('payment_date', '<=', $end);
+            })
             ->orderBy('payment_date', 'desc')
             ->paginate(10, ['*'], 'payment_page');
 
-        $agencyVendors = AgencyVendor::orderBy('name')->get();
+        $agencyVendors = AgencyVendor::withSum('expenses', 'amount')
+            ->withSum('payments', 'amount')
+            ->orderBy('name')
+            ->get();
 
         return view('payments.index', [
             'user'          => Auth::user(),
-            'payments'      => $payments,
-            'paymentSearch' => $paymentSearch,
-            'agencyVendors' => $agencyVendors,
+            'payments'         => $payments,
+            'paymentSearch'    => $paymentSearch,
+            'paymentStartDate' => $paymentStartDate,
+            'paymentEndDate'   => $paymentEndDate,
+            'agencyVendors'    => $agencyVendors,
         ]);
     }
 
