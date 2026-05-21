@@ -88,6 +88,10 @@
                         </td>
                         <td>
                             <div class="actions-cell" style="justify-content:center;">
+                                <button type="button" class="btn btn-primary btn-sm btn-view-payments" data-id="{{ $av->id }}" title="View Payments" style="background-color: var(--info); color: white; border-color: var(--info);">
+                                    <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                                    View
+                                </button>
                                 @can('edit-agency-vendor')
                                 <a href="{{ route('agency_vendors.edit', $av->id) }}" class="btn btn-edit btn-sm" title="Edit">
                                     <svg width="11" height="11" viewBox="0 0 20 20" fill="currentColor"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z"/></svg>
@@ -175,3 +179,210 @@
         @endif
     </div>
 </div>
+
+{{-- View Payments Modal --}}
+<div id="modal-view-payments" style="display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;">
+    <div id="modal-view-payments-backdrop" style="position:absolute; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(3px);"></div>
+    <div style="
+        position:relative; z-index:1; background:var(--card-bg, #fff);
+        border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+        width:100%; max-width:850px; margin:1rem;
+        animation:modalSlideIn .2s ease;
+        max-height: 90vh; display:flex; flex-direction:column;
+    ">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color, #e5e7eb);">
+            <div style="font-weight:700; font-size:1rem; color:var(--text-color);">
+                Payments: <span id="view-payments-vendor-name"></span>
+            </div>
+            <button type="button" id="btn-close-view-payments" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; border-radius:6px;" title="Close">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+            </button>
+        </div>
+        <div style="padding:1.5rem; overflow-y:auto; flex:1;">
+            <div id="view-payments-loading" style="display:none; text-align:center; padding:2rem 0; color:var(--text-muted);">
+                Loading payments...
+            </div>
+            <div id="view-payments-content">
+                <table style="width:100%; margin-bottom:1rem; border-collapse:collapse;" id="view-payments-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 130px;">Date</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 140px;">Amount</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 90px;">Type</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb);">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="view-payments-tbody">
+                    </tbody>
+                </table>
+                <div id="view-payments-empty" style="display:none; text-align:center; padding:2rem 0; color:var(--text-muted);">
+                    No payments found for this agency/vendor.
+                </div>
+                <div id="view-payments-pagination" class="pagination-links" style="display:flex; justify-content:center; gap:0.25rem; margin-top:1rem;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const modal = document.getElementById('modal-view-payments');
+    const backdrop = document.getElementById('modal-view-payments-backdrop');
+    const closeBtn = document.getElementById('btn-close-view-payments');
+    const tbody = document.getElementById('view-payments-tbody');
+    const table = document.getElementById('view-payments-table');
+    const emptyState = document.getElementById('view-payments-empty');
+    const pagination = document.getElementById('view-payments-pagination');
+    const loading = document.getElementById('view-payments-loading');
+    const content = document.getElementById('view-payments-content');
+    const vendorNameEl = document.getElementById('view-payments-vendor-name');
+
+    let currentVendorId = null;
+
+    function openModal(vendorId) {
+        currentVendorId = vendorId;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        fetchPayments(vendorId, 1);
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function fetchPayments(vendorId, page) {
+        loading.style.display = 'block';
+        content.style.display = 'none';
+        
+        fetch(`/agency-vendors/${vendorId}/payments?page=${page}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            vendorNameEl.textContent = data.agency_vendor_name;
+            renderPayments(data.payments);
+            renderPagination(data.pagination);
+            
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        })
+        .catch(err => {
+            console.error('Error fetching payments:', err);
+            loading.style.display = 'none';
+        });
+    }
+
+    function renderPayments(payments) {
+        tbody.innerHTML = '';
+        if (payments.length === 0) {
+            table.style.display = 'none';
+            emptyState.style.display = 'block';
+        } else {
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+            
+            payments.forEach(p => {
+                const tr = document.createElement('tr');
+                
+                const tdDate = document.createElement('td');
+                tdDate.style.padding = '0.75rem';
+                tdDate.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                tdDate.style.color = 'var(--text-muted)';
+                tdDate.textContent = p.date_formatted;
+                
+                const tdAmount = document.createElement('td');
+                tdAmount.style.padding = '0.75rem';
+                tdAmount.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                tdAmount.style.color = p.payment_type === 0 ? 'var(--danger)' : 'var(--success)';
+                tdAmount.style.fontWeight = '500';
+                tdAmount.textContent = '₹' + p.amount_formatted;
+                
+                const tdType = document.createElement('td');
+                tdType.style.padding = '0.75rem';
+                tdType.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.style.fontSize = '0.7rem';
+                if (p.payment_type === 0) {
+                    badge.style.background = '#fee2e2';
+                    badge.style.color = '#991b1b';
+                    badge.textContent = 'Debit';
+                } else {
+                    badge.style.background = '#dcfce7';
+                    badge.style.color = '#166534';
+                    badge.textContent = 'Credit';
+                }
+                tdType.appendChild(badge);
+                
+                const tdNotes = document.createElement('td');
+                tdNotes.style.padding = '0.75rem';
+                tdNotes.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                tdNotes.style.color = 'var(--text-muted)';
+                tdNotes.style.fontSize = '0.85rem';
+                tdNotes.textContent = p.notes || '—';
+                
+                tr.appendChild(tdDate);
+                tr.appendChild(tdAmount);
+                tr.appendChild(tdType);
+                tr.appendChild(tdNotes);
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    function renderPagination(pag) {
+        pagination.innerHTML = '';
+        if (pag.last_page <= 1) return;
+
+        const prev = document.createElement(pag.current_page > 1 ? 'a' : 'span');
+        prev.textContent = '<';
+        if (pag.current_page > 1) {
+            prev.href = 'javascript:void(0)';
+            prev.onclick = () => fetchPayments(currentVendorId, pag.current_page - 1);
+        } else {
+            prev.className = 'disabled';
+        }
+        pagination.appendChild(prev);
+
+        for (let i = 1; i <= pag.last_page; i++) {
+            const page = document.createElement(i === pag.current_page ? 'span' : 'a');
+            page.textContent = i;
+            if (i === pag.current_page) {
+                page.className = 'active';
+            } else {
+                page.href = 'javascript:void(0)';
+                page.onclick = () => fetchPayments(currentVendorId, i);
+            }
+            pagination.appendChild(page);
+        }
+
+        const next = document.createElement(pag.current_page < pag.last_page ? 'a' : 'span');
+        next.textContent = '>';
+        if (pag.current_page < pag.last_page) {
+            next.href = 'javascript:void(0)';
+            next.onclick = () => fetchPayments(currentVendorId, pag.current_page + 1);
+        } else {
+            next.className = 'disabled';
+        }
+        pagination.appendChild(next);
+    }
+
+    document.querySelectorAll('.btn-view-payments').forEach(btn => {
+        btn.addEventListener('click', function() {
+            openModal(this.dataset.id);
+        });
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+    });
+})();
+</script>

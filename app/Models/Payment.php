@@ -11,11 +11,19 @@ class Payment extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const TYPE_DEBIT  = 0;
+    public const TYPE_CREDIT = 1;
+
+    public const TYPES = [
+        self::TYPE_DEBIT  => 'Debit',
+        self::TYPE_CREDIT => 'Credit',
+    ];
 
     protected $fillable = [
         'user_id',
         'agency_vendor_id',
         'amount',
+        'payment_type',
         'notes',
         'payment_date',
     ];

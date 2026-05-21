@@ -50,7 +50,7 @@ class AVController extends Controller implements HasMiddleware
         $agencyVendors = DB::table('agency_vendors')
             ->select('agency_vendors.*')
             ->selectRaw('(SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expenses.agency_vendor_id = agency_vendors.id AND expenses.deleted_at IS NULL) as expenses_sum_amount')
-            ->selectRaw('(SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payments.agency_vendor_id = agency_vendors.id AND payments.deleted_at IS NULL) as payments_sum_amount')
+            ->selectRaw('(SELECT COALESCE(SUM(CASE WHEN payment_type = 1 THEN amount WHEN payment_type = 0 THEN -amount ELSE amount END), 0) FROM payments WHERE payments.agency_vendor_id = agency_vendors.id AND payments.deleted_at IS NULL) as payments_sum_amount')
             ->whereNull('agency_vendors.deleted_at')
             ->when($avSearch, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -60,7 +60,7 @@ class AVController extends Controller implements HasMiddleware
                 });
             })
             ->orderBy('agency_vendors.name')
-            ->paginate(10, ['*'], 'av_page');
+            ->paginate(6, ['*'], 'av_page');
 
         return view('agency_vendors.index', [
             'agencyVendors' => $agencyVendors,
@@ -110,5 +110,34 @@ class AVController extends Controller implements HasMiddleware
         $agencyVendor->delete();
 
         return back()->with('success', 'Agency/Vendor deleted successfully.');
+    }
+
+    public function getPayments(Request $request, AgencyVendor $agencyVendor)
+    {
+        $payments = \App\Models\Payment::where('agency_vendor_id', $agencyVendor->id)
+            ->orderBy('payment_date', 'desc')
+            ->paginate(8);
+
+        // Format dates and amounts for JSON response
+        $payments->getCollection()->transform(function ($payment) {
+            return [
+                'id' => $payment->id,
+                'amount_formatted' => number_format($payment->amount, 2),
+                'payment_type' => $payment->payment_type,
+                'payment_type_label' => \App\Models\Payment::TYPES[$payment->payment_type] ?? ucfirst($payment->payment_type),
+                'date_formatted' => $payment->payment_date->format('d M Y'),
+                'notes' => $payment->notes
+            ];
+        });
+
+        return response()->json([
+            'payments' => $payments->items(),
+            'pagination' => [
+                'current_page' => $payments->currentPage(),
+                'last_page' => $payments->lastPage(),
+                'total' => $payments->total(),
+            ],
+            'agency_vendor_name' => $agencyVendor->name
+        ]);
     }
 }

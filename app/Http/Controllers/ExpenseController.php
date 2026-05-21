@@ -20,7 +20,7 @@ class ExpenseController extends Controller
         $expenseSearch = $request->input('expense_search', '');
         $expenseStatus = $request->input('expense_status', 'active');
 
-        $expenses = Expense::with(['category', 'subCategory', 'user'])
+        $expenses = Expense::with(['category', 'subCategory', 'user', 'agencyVendor'])
             ->when($expenseStatus === 'trashed', function ($query) {
                 $query->onlyTrashed();
             })

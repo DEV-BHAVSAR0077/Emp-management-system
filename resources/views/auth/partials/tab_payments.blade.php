@@ -54,6 +54,7 @@
                         <th>#</th>
                         <th>Agent / Vendor</th>
                         <th>Amount</th>
+                        <th>Type</th>
                         <th>Date</th>
                         <th>Notes</th>
                         <th style="text-align:center;">Actions</th>
@@ -72,7 +73,14 @@
                             @endif
                         </td>
                         <td>
-                            <span class="expense-amount" style="color:var(--success);"><span class="amount-symbol">₹</span>{{ number_format($pay->amount, 2) }}</span>
+                            <span class="expense-amount" style="color:{{ $pay->payment_type === 0 ? 'var(--danger)' : 'var(--success)' }};"><span class="amount-symbol">₹</span>{{ number_format($pay->amount, 2) }}</span>
+                        </td>
+                        <td>
+                            @if($pay->payment_type === 0)
+                                <span class="badge" style="background:#fee2e2; color:#991b1b; font-size:.7rem;">Debit</span>
+                            @else
+                                <span class="badge" style="background:#dcfce7; color:#166534; font-size:.7rem;">Credit</span>
+                            @endif
                         </td>
                         <td style="color:var(--text-muted);">{{ $pay->payment_date->format('d M Y') }}</td>
                         <td>
@@ -89,6 +97,7 @@
                                     data-id="{{ $pay->id }}"
                                     data-vendor="{{ $pay->agency_vendor_id }}"
                                     data-amount="{{ $pay->amount }}"
+                                    data-payment-type="{{ $pay->payment_type }}"
                                     data-date="{{ $pay->payment_date->format('Y-m-d') }}"
                                     data-notes="{{ $pay->notes }}"
                                     title="Edit payment">
@@ -113,10 +122,15 @@
                 <tfoot>
                     <tr style="border-top:2px solid var(--border); background:var(--surface-alt, #f9fafb);">
                         <td colspan="2" style="padding:.75rem 1rem; font-weight:600; color:var(--text-muted); font-size:.82rem;">Page Total</td>
-                        <td style="padding:.75rem 1rem; font-weight:700; color:var(--success);">
-                            ₹{{ number_format($payments->sum('amount'), 2) }}
+                        <td style="padding:.75rem 1rem; font-weight:700;">
+                            @php
+                                $pageNet = $payments->sum(function($p) {
+                                    return $p->payment_type === 0 ? -$p->amount : $p->amount;
+                                });
+                            @endphp
+                            <span style="color:{{ $pageNet >= 0 ? 'var(--success)' : 'var(--danger)' }};">₹{{ number_format(abs($pageNet), 2) }}</span>
                         </td>
-                        <td colspan="3"></td>
+                        <td colspan="4"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -214,6 +228,17 @@
                         @error('amount')<span class="field-error">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
+                        <label for="payment_type">Payment Type <span style="color:var(--danger);">*</span></label>
+                        <select id="payment_type" name="payment_type" class="{{ $errors->has('payment_type') ? 'input-error' : '' }}" required>
+                            <option value="1" {{ old('payment_type', '1') == '1' ? 'selected' : '' }}>Credit</option>
+                            <option value="0" {{ old('payment_type') == '0' ? 'selected' : '' }}>Debit</option>
+                        </select>
+                        @error('payment_type')<span class="field-error">{{ $message }}</span>@enderror
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="payment_date">Date <span style="color:var(--danger);">*</span></label>
                         <input type="date" id="payment_date" name="payment_date" value="{{ old('payment_date', date('Y-m-d')) }}" class="{{ $errors->has('payment_date') ? 'input-error' : '' }}" required />
                         @error('payment_date')<span class="field-error">{{ $message }}</span>@enderror
@@ -253,6 +278,7 @@
             
             document.getElementById('payment_agency_vendor_id').value = btn.dataset.vendor;
             document.getElementById('payment_amount').value = btn.dataset.amount;
+            document.getElementById('payment_type').value = btn.dataset.paymentType || '1';
             document.getElementById('payment_date').value = btn.dataset.date;
             document.getElementById('payment_notes').value = btn.dataset.notes;
 
@@ -266,6 +292,7 @@
 
             document.getElementById('payment_agency_vendor_id').value = '';
             document.getElementById('payment_amount').value = '';
+            document.getElementById('payment_type').value = '1';
             document.getElementById('payment_date').value = '{{ date('Y-m-d') }}';
             document.getElementById('payment_notes').value = '';
 
@@ -279,11 +306,9 @@
             document.getElementById('payment_agency_vendor_id').dispatchEvent(new Event('change'));
         }
 
-        // Clear previous errors if we are opening a fresh modal (not on page reload)
-        if (!'{{ old('modal_action') }}') {
-            form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
-            form.querySelectorAll('.field-error').forEach(el => el.remove());
-        }
+        // Clear previous errors
+        form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+        form.querySelectorAll('.field-error').forEach(el => el.remove());
 
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -292,11 +317,6 @@
     function closePaymentModal() {
         modal.style.display = 'none';
         document.body.style.overflow = '';
-        
-        // If there were errors on screen, reloading cleans them up properly.
-        if ('{{ old('modal_action') }}') {
-            window.location.href = '{{ route('payments.index') }}';
-        }
     }
 
     // Bind edit buttons
@@ -320,7 +340,7 @@
         }
 
         const option = this.options[this.selectedIndex];
-        if (option.value && option.hasAttribute('data-balance')) {
+        if (option && option.value && option.hasAttribute('data-balance')) {
             const bal = parseFloat(option.getAttribute('data-balance'));
             if (bal > 0) {
                 amountEl.textContent = '₹' + bal.toFixed(2);
@@ -341,6 +361,116 @@
     // ESC key
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && modal.style.display === 'flex') closePaymentModal();
+    });
+
+    // ----- AJAX Submission & Real-time Validation ----- //
+
+    const removeError = (input) => {
+        input.classList.remove('input-error');
+        const parent = input.parentNode;
+        const existingError = parent.querySelector('.field-error');
+        if (existingError) {
+            existingError.remove();
+        }
+    };
+
+    const addError = (input, message) => {
+        removeError(input);
+        input.classList.add('input-error');
+        const errorSpan = document.createElement('span');
+        errorSpan.className = 'field-error';
+        errorSpan.textContent = message;
+        input.parentNode.appendChild(errorSpan);
+    };
+
+    document.getElementById('payment_amount').addEventListener('input', function() {
+        if (this.value === '') {
+            addError(this, 'Payment amount is required.');
+        } else if (this.value < 0.01 || this.value > 9999999999.99) {
+            addError(this, 'Amount must be between 0.01 and 9999999999.99.');
+        } else {
+            removeError(this);
+        }
+    });
+
+    document.getElementById('payment_agency_vendor_id').addEventListener('change', function() {
+        if (!this.value) {
+            addError(this, 'Please select an agency or vendor.');
+        } else {
+            removeError(this);
+        }
+    });
+
+    document.getElementById('payment_date').addEventListener('change', function() {
+        if (!this.value) {
+            addError(this, 'Payment date is required.');
+        } else {
+            removeError(this);
+        }
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        
+        // Final client side validation before submit
+        let hasErrors = false;
+        ['payment_amount', 'payment_agency_vendor_id', 'payment_date'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.dispatchEvent(new Event(id === 'payment_amount' ? 'input' : 'change'));
+                if (el.classList.contains('input-error')) {
+                    hasErrors = true;
+                }
+            }
+        });
+
+        if (hasErrors) return;
+
+        const formData = new FormData(form);
+        const url = form.action;
+        const btnSave = document.getElementById('btn-save-payment');
+        const originalText = btnSave.innerHTML;
+        
+        btnSave.innerHTML = 'Saving...';
+        btnSave.disabled = true;
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 422) {
+                    return response.json().then(data => { throw { status: 422, errors: data.errors }; });
+                }
+                throw { status: response.status, message: 'An error occurred.' };
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Success: reload the page to update table and totals
+            window.location.reload();
+        })
+        .catch(error => {
+            btnSave.innerHTML = originalText;
+            btnSave.disabled = false;
+
+            if (error.status === 422 && error.errors) {
+                for (const [field, messages] of Object.entries(error.errors)) {
+                    let input = document.getElementById(`payment_${field}`) || document.querySelector(`[name="${field}"]`);
+                    if (input) {
+                        addError(input, messages[0]);
+                    }
+                }
+            } else {
+                alert(error.message || 'Error saving payment.');
+            }
+        });
     });
 })();
 </script>

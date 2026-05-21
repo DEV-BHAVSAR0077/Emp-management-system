@@ -48,10 +48,11 @@ class PaymentController extends Controller implements HasMiddleware
                 $query->whereDate('payment_date', '<=', $end);
             })
             ->orderBy('payment_date', 'desc')
-            ->paginate(10, ['*'], 'payment_page');
+            ->paginate(8, ['*'], 'payment_page');
 
-        $agencyVendors = AgencyVendor::withSum('expenses', 'amount')
-            ->withSum('payments', 'amount')
+        $agencyVendors = AgencyVendor::select('agency_vendors.*')
+            ->withSum('expenses', 'amount')
+            ->selectRaw('(SELECT COALESCE(SUM(CASE WHEN payment_type = 1 THEN amount WHEN payment_type = 0 THEN -amount ELSE amount END), 0) FROM payments WHERE payments.agency_vendor_id = agency_vendors.id AND payments.deleted_at IS NULL) as payments_sum_amount')
             ->orderBy('name')
             ->get();
 
@@ -89,9 +90,15 @@ class PaymentController extends Controller implements HasMiddleware
             'user_id'          => Auth::id(),
             'agency_vendor_id' => $agencyVendorId,
             'amount'           => $request->amount,
+            'payment_type'     => $request->payment_type,
             'notes'            => $request->notes,
             'payment_date'     => $request->payment_date,
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            session()->flash('success', 'Payment recorded successfully.');
+            return response()->json(['success' => true, 'message' => 'Payment recorded successfully.']);
+        }
 
         return redirect()->route('payments.index')
                          ->with('success', 'Payment recorded successfully.');
@@ -119,9 +126,15 @@ class PaymentController extends Controller implements HasMiddleware
         $payment->update([
             'agency_vendor_id' => $request->agency_vendor_id,
             'amount'           => $request->amount,
+            'payment_type'     => $request->payment_type,
             'notes'            => $request->notes,
             'payment_date'     => $request->payment_date,
         ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            session()->flash('success', 'Payment updated successfully.');
+            return response()->json(['success' => true, 'message' => 'Payment updated successfully.']);
+        }
 
         return redirect()->route('payments.index')
                          ->with('success', 'Payment updated successfully.');

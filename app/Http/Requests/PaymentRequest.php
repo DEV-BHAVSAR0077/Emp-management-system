@@ -24,6 +24,7 @@ class PaymentRequest extends FormRequest
         return [
             'agency_vendor_id' => 'required|exists:agency_vendors,id',
             'amount'           => 'required|numeric|min:0.01|max:9999999999.99',
+            'payment_type'     => 'required|in:0,1',
             'notes'            => 'nullable|string|max:1000',
             'payment_date'     => 'required|date',
         ];
@@ -42,6 +43,8 @@ class PaymentRequest extends FormRequest
             'amount.required'           => 'Payment amount is required.',
             'amount.numeric'            => 'Amount must be a valid number.',
             'amount.min'                => 'Amount must be at least 0.01.',
+            'payment_type.required'     => 'Please select a payment type.',
+            'payment_type.in'           => 'Payment type must be Credit or Debit.',
             'payment_date.required'     => 'Payment date is required.',
             'payment_date.date'         => 'Please enter a valid date.',
             'notes.max'                 => 'Notes may not exceed 1000 characters.',

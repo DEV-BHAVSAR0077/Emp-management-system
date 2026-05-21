@@ -142,6 +142,7 @@ Route::middleware('auth')->group(function () {
          ->name('categories.subs');
 
     // ── Agency & Vendor Module ────────────────────────────────────────────
+    Route::get('/agency-vendors/{agencyVendor}/payments', [AVController::class, 'getPayments'])->name('agency_vendors.payments');
     Route::resource('agency-vendors', AVController::class)
          ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
          ->names('agency_vendors');
