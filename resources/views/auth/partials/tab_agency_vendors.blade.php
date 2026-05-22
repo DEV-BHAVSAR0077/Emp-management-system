@@ -47,7 +47,7 @@
                         <th>Name</th>
                         <th>Type</th>
                         <th>Contact</th>
-                        <th>Total Expense</th>
+                        <th>Remaining Balance</th>
                         <th style="text-align:center;">Actions</th>
                     </tr>
                 </thead>
@@ -72,13 +72,11 @@
                         </td>
                         <td>
                             @php
-                                $rowTotal = $av->expenses_sum_amount ?? 0;
-                                $rowPaid = $av->payments_sum_amount ?? 0;
-                                $remaining = (float)$rowTotal - (float)$rowPaid;
+                                $remaining = (float)$av->balance;
                             @endphp
-                            @if ($rowPaid > $rowTotal)
+                            @if ($remaining < 0)
                                 <strong style="color: var(--success);">
-                                    +₹{{ number_format((float)$rowPaid - (float)$rowTotal, 2) }}
+                                    +₹{{ number_format(abs($remaining), 2) }}
                                 </strong>
                             @else
                                 <strong style="color: {{ $remaining > 0 ? 'var(--danger)' : 'var(--text-muted)' }}">
@@ -120,12 +118,10 @@
                         <td colspan="4" style="padding:.75rem 1rem; font-weight:600; color:var(--text-muted); font-size:.82rem;">Page Total</td>
                         <td style="padding:.75rem 1rem; font-weight:700;">
                             @php
-                                $totalExp = $agencyVendors->sum('expenses_sum_amount');
-                                $totalPaid = $agencyVendors->sum('payments_sum_amount');
-                                $totalRemaining = $totalExp - $totalPaid;
+                                $totalRemaining = $agencyVendors->sum('balance');
                             @endphp
-                            @if ($totalPaid > $totalExp)
-                                <span style="color: var(--success);">+₹{{ number_format($totalPaid - $totalExp, 2) }}</span>
+                            @if ($totalRemaining < 0)
+                                <span style="color: var(--success);">+₹{{ number_format(abs($totalRemaining), 2) }}</span>
                             @else
                                 <span style="color: {{ $totalRemaining > 0 ? 'var(--danger)' : 'var(--text-muted)' }}">₹{{ number_format($totalRemaining, 2) }}</span>
                             @endif
@@ -192,7 +188,8 @@
     ">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color, #e5e7eb);">
             <div style="font-weight:700; font-size:1rem; color:var(--text-color);">
-                Payments: <span id="view-payments-vendor-name"></span>
+                Payment History: <span id="view-payments-vendor-name"></span>
+                <span id="view-payments-final-balance" style="margin-left:1rem; font-size:0.9rem; padding:0.2rem 0.6rem; border-radius:6px; display:inline-block;"></span>
             </div>
             <button type="button" id="btn-close-view-payments" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; border-radius:6px;" title="Close">
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
@@ -265,6 +262,25 @@
         .then(res => res.json())
         .then(data => {
             vendorNameEl.textContent = data.agency_vendor_name;
+
+            const balEl = document.getElementById('view-payments-final-balance');
+            if (balEl) {
+                const bal = parseFloat(data.final_balance || 0);
+                if (bal < 0) {
+                    balEl.textContent = 'Overpaid: +₹' + Math.abs(bal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    balEl.style.backgroundColor = '#dcfce7'; // var(--success-bg)
+                    balEl.style.color = '#166534'; // var(--success)
+                } else if (bal > 0) {
+                    balEl.textContent = 'To Pay: ₹' + bal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    balEl.style.backgroundColor = '#fee2e2'; // var(--danger-bg)
+                    balEl.style.color = '#991b1b'; // var(--danger)
+                } else {
+                    balEl.textContent = 'Settled: ₹0.00';
+                    balEl.style.backgroundColor = '#f3f4f6';
+                    balEl.style.color = 'var(--text-muted)';
+                }
+            }
+
             renderPayments(data.payments);
             renderPagination(data.pagination);
             
@@ -298,7 +314,7 @@
                 const tdAmount = document.createElement('td');
                 tdAmount.style.padding = '0.75rem';
                 tdAmount.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
-                tdAmount.style.color = p.payment_type === 0 ? 'var(--danger)' : 'var(--success)';
+                tdAmount.style.color = p.color;
                 tdAmount.style.fontWeight = '500';
                 tdAmount.textContent = '₹' + p.amount_formatted;
                 
@@ -308,15 +324,9 @@
                 const badge = document.createElement('span');
                 badge.className = 'badge';
                 badge.style.fontSize = '0.7rem';
-                if (p.payment_type === 0) {
-                    badge.style.background = '#fee2e2';
-                    badge.style.color = '#991b1b';
-                    badge.textContent = 'Debit';
-                } else {
-                    badge.style.background = '#dcfce7';
-                    badge.style.color = '#166534';
-                    badge.textContent = 'Credit';
-                }
+                badge.style.background = p.badge_bg;
+                badge.style.color = p.badge_color;
+                badge.textContent = p.type_label;
                 tdType.appendChild(badge);
                 
                 const tdNotes = document.createElement('td');

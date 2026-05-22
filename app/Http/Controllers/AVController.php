@@ -49,8 +49,6 @@ class AVController extends Controller implements HasMiddleware
         
         $agencyVendors = DB::table('agency_vendors')
             ->select('agency_vendors.*')
-            ->selectRaw('(SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expenses.agency_vendor_id = agency_vendors.id AND expenses.deleted_at IS NULL) as expenses_sum_amount')
-            ->selectRaw('(SELECT COALESCE(SUM(CASE WHEN payment_type = 1 THEN amount WHEN payment_type = 0 THEN -amount ELSE amount END), 0) FROM payments WHERE payments.agency_vendor_id = agency_vendors.id AND payments.deleted_at IS NULL) as payments_sum_amount')
             ->whereNull('agency_vendors.deleted_at')
             ->when($avSearch, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -114,30 +112,70 @@ class AVController extends Controller implements HasMiddleware
 
     public function getPayments(Request $request, AgencyVendor $agencyVendor)
     {
-        $payments = \App\Models\Payment::where('agency_vendor_id', $agencyVendor->id)
-            ->orderBy('payment_date', 'desc')
+        $expenses = DB::table('expenses')
+            ->select('id', 'amount', DB::raw("'expense' as record_type"), DB::raw('NULL as payment_type'), 'expense_date as record_date', 'note as notes', 'created_at')
+            ->where('agency_vendor_id', $agencyVendor->id)
+            ->whereNull('deleted_at');
+
+        $payments = DB::table('payments')
+            ->select('id', 'amount', DB::raw("'payment' as record_type"), 'payment_type', 'payment_date as record_date', 'notes', 'created_at')
+            ->where('agency_vendor_id', $agencyVendor->id)
+            ->whereNull('deleted_at');
+
+        $history = $expenses->unionAll($payments)
+            ->orderBy('record_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->paginate(8);
 
         // Format dates and amounts for JSON response
-        $payments->getCollection()->transform(function ($payment) {
+        $history->getCollection()->transform(function ($item) {
+            $date = \Carbon\Carbon::parse($item->record_date);
+            
+            $typeLabel = '';
+            $color = '';
+            $badgeBg = '';
+            $badgeColor = '';
+            
+            if ($item->record_type === 'expense') {
+                $typeLabel = 'Expense';
+                $color = 'var(--text)'; // Default text color
+                $badgeBg = '#e0e7ff'; // Indigo bg
+                $badgeColor = '#3730a3'; // Indigo text
+            } else {
+                if ($item->payment_type == 1) { // Credit
+                    $typeLabel = 'Credit';
+                    $color = 'var(--success)';
+                    $badgeBg = '#dcfce7';
+                    $badgeColor = '#166534';
+                } else { // Debit
+                    $typeLabel = 'Debit';
+                    $color = 'var(--danger)';
+                    $badgeBg = '#fee2e2';
+                    $badgeColor = '#991b1b';
+                }
+            }
+
             return [
-                'id' => $payment->id,
-                'amount_formatted' => number_format($payment->amount, 2),
-                'payment_type' => $payment->payment_type,
-                'payment_type_label' => \App\Models\Payment::TYPES[$payment->payment_type] ?? ucfirst($payment->payment_type),
-                'date_formatted' => $payment->payment_date->format('d M Y'),
-                'notes' => $payment->notes
+                'id' => $item->id,
+                'amount_formatted' => number_format($item->amount, 2),
+                'type_label' => $typeLabel,
+                'date_formatted' => $date->format('d M Y'),
+                'notes' => $item->notes,
+                'color' => $color,
+                'badge_bg' => $badgeBg,
+                'badge_color' => $badgeColor
             ];
         });
 
         return response()->json([
-            'payments' => $payments->items(),
+            'payments' => $history->items(),
             'pagination' => [
-                'current_page' => $payments->currentPage(),
-                'last_page' => $payments->lastPage(),
-                'total' => $payments->total(),
+                'current_page' => $history->currentPage(),
+                'last_page' => $history->lastPage(),
+                'total' => $history->total(),
             ],
-            'agency_vendor_name' => $agencyVendor->name
+            'agency_vendor_name' => $agencyVendor->name,
+            'final_balance' => (float) $agencyVendor->balance
         ]);
     }
 }

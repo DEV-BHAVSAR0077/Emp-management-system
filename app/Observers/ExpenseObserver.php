@@ -23,7 +23,9 @@ class ExpenseObserver
         }
 
         $totalExpenses = Expense::where('agency_vendor_id', $agencyVendorId)->sum('amount');
-        $totalPayments = \App\Models\Payment::where('agency_vendor_id', $agencyVendorId)->sum('amount');
+        $totalPayments = \App\Models\Payment::where('agency_vendor_id', $agencyVendorId)
+            ->selectRaw('COALESCE(SUM(CASE WHEN payment_type = 1 THEN amount WHEN payment_type = 0 THEN -amount ELSE amount END), 0) as total')
+            ->value('total');
 
         $vendor->balance = $totalExpenses - $totalPayments;
         $vendor->saveQuietly(); // saveQuietly avoids triggering Vendor observers

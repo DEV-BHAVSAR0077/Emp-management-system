@@ -16,8 +16,120 @@ class UserController extends Controller
     // Display the dashboard.
     public function dashboard()
     {
+        $todayExpense = \App\Models\Expense::whereDate('expense_date', \Carbon\Carbon::today())->sum('amount');
+        $monthExpense = \App\Models\Expense::whereYear('expense_date', \Carbon\Carbon::now()->year)
+                            ->whereMonth('expense_date', \Carbon\Carbon::now()->month)
+                            ->sum('amount');
+        $yearExpense = \App\Models\Expense::whereYear('expense_date', \Carbon\Carbon::now()->year)->sum('amount');
+        $totalBalance = \App\Models\AgencyVendor::sum('balance');
+
         return view('auth.dashboard', [
             'user' => Auth::user(),
+            'todayExpense' => $todayExpense,
+            'monthExpense' => $monthExpense,
+            'yearExpense' => $yearExpense,
+            'totalBalance' => $totalBalance,
+        ]);
+    }
+
+    public function getChartData(Request $request)
+    {
+        $month = $request->input('month', \Carbon\Carbon::now()->month);
+        $year = $request->input('year', \Carbon\Carbon::now()->year);
+
+        $expenses = \App\Models\Expense::whereYear('expense_date', $year)
+            ->whereMonth('expense_date', $month)
+            ->selectRaw('agency_vendor_id, SUM(amount) as total')
+            ->groupBy('agency_vendor_id')
+            ->get();
+
+        $vendorIds = $expenses->pluck('agency_vendor_id');
+        $vendors = \App\Models\AgencyVendor::whereIn('id', $vendorIds)->get()->keyBy('id');
+
+        $labels = [];
+        $data = [];
+
+        foreach ($expenses as $expense) {
+            $vendorName = isset($vendors[$expense->agency_vendor_id]) ? $vendors[$expense->agency_vendor_id]->name : 'Unknown';
+            $labels[] = $vendorName;
+            $data[] = $expense->total;
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data,
+        ]);
+    }
+
+    public function getStackedChartData(Request $request)
+    {
+        $month = $request->input('month', \Carbon\Carbon::now()->month);
+        $year = $request->input('year', \Carbon\Carbon::now()->year);
+
+        $expenses = \Illuminate\Support\Facades\DB::table('expenses')
+            ->leftJoin('categories', 'expenses.expense_category_id', '=', 'categories.id')
+            ->leftJoin('sub_categories', 'expenses.expense_sub_category_id', '=', 'sub_categories.id')
+            ->whereYear('expenses.expense_date', $year)
+            ->whereMonth('expenses.expense_date', $month)
+            ->whereNull('expenses.deleted_at')
+            ->select(
+                \Illuminate\Support\Facades\DB::raw('COALESCE(categories.name, "Uncategorized") as category_name'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(sub_categories.name, "General") as sub_category_name'),
+                \Illuminate\Support\Facades\DB::raw('SUM(expenses.amount) as total')
+            )
+            ->groupBy('category_name', 'sub_category_name')
+            ->get();
+
+        $categories = $expenses->pluck('category_name')->unique()->values()->all();
+        $subCategories = $expenses->pluck('sub_category_name')->unique()->values()->all();
+
+        $datasets = [];
+        foreach ($subCategories as $subCat) {
+            $data = [];
+            foreach ($categories as $cat) {
+                $match = $expenses->first(function ($item) use ($cat, $subCat) {
+                    return $item->category_name === $cat && $item->sub_category_name === $subCat;
+                });
+                $data[] = $match ? (float) $match->total : 0;
+            }
+            $datasets[] = [
+                'label' => $subCat,
+                'data' => $data,
+            ];
+        }
+
+        return response()->json([
+            'labels' => $categories,
+            'datasets' => $datasets,
+        ]);
+    }
+
+    public function getLineChartData(Request $request)
+    {
+        $year = $request->input('year', \Carbon\Carbon::now()->year);
+
+        $expenses = \Illuminate\Support\Facades\DB::table('expenses')
+            ->whereYear('expense_date', $year)
+            ->whereNull('deleted_at')
+            ->select(
+                \Illuminate\Support\Facades\DB::raw('MONTH(expense_date) as month'),
+                \Illuminate\Support\Facades\DB::raw('SUM(amount) as total')
+            )
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month');
+
+        $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $data = [];
+
+        for ($i = 1; $i <= 12; $i++) {
+            $data[] = isset($expenses[$i]) ? (float) $expenses[$i]->total : 0;
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data,
         ]);
     }
 

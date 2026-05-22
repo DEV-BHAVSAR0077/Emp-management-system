@@ -45,6 +45,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [UserController::class, 'dashboard'])
          ->name('dashboard');
 
+    Route::get('/dashboard/chart-data', [UserController::class, 'getChartData'])
+         ->name('dashboard.chart_data');
+
+    Route::get('/dashboard/stacked-chart-data', [UserController::class, 'getStackedChartData'])
+         ->name('dashboard.stacked_chart_data');
+
+    Route::get('/dashboard/line-chart-data', [UserController::class, 'getLineChartData'])
+         ->name('dashboard.line_chart_data');
+
     // Users List
     Route::get('/users', [UserController::class, 'index'])
          ->name('users.index')->middleware('permission:view-user');
