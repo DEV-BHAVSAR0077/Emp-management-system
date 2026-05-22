@@ -28,7 +28,7 @@ class ExpenseController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->orderBy('expense_date', 'desc')
-            ->paginate(10, ['*'], 'expense_page');
+            ->paginate(8, ['*'], 'expense_page');
 
         return view('expenses.index', [
             'user'          => Auth::user(),

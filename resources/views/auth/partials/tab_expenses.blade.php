@@ -43,7 +43,7 @@
                         <th>#</th>
                         <th>Expense</th>
                         <th>Amount</th>
-                        <th>Category</th>
+                        <th>Agency & Vendor</th>
                         <th>Date</th>
                         <th style="text-align:center;">Actions</th>
                     </tr>
@@ -62,8 +62,9 @@
                             <span class="expense-amount"><span class="amount-symbol">₹</span>{{ number_format($exp->amount, 2) }}</span>
                         </td>
                         <td>
-                            @if($exp->category)
-                                <span class="badge">{{ $exp->category->name }}</span>
+                            @if($exp->agencyVendor)
+                                <div style="font-weight:500;">{{ $exp->agencyVendor->name }}</div>
+                                <span class="badge" style="background:#e5e7eb; color:#374151; font-size:12px;">{{ \App\Models\AgencyVendor::TYPES[$exp->agencyVendor->type] ?? '—' }}</span>
                             @else
                                 <span style="font-size:.75rem; color:var(--text-muted);">—</span>
                             @endif
