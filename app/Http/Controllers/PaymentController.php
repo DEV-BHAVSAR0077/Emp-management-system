@@ -47,7 +47,7 @@ class PaymentController extends Controller implements HasMiddleware
             ->when($paymentEndDate, function ($query, $end) {
                 $query->whereDate('payment_date', '<=', $end);
             })
-            ->orderBy('payment_date', 'desc')
+            ->orderBy('id', 'desc')
             ->paginate(8, ['*'], 'payment_page');
 
         $agencyVendors = AgencyVendor::select('agency_vendors.*')
