@@ -38,6 +38,9 @@
             --hr-bg:         #f5f3ff;
             --admin-color:   #b45309;
             --admin-bg:      #fef3c7;
+            --restore-bg:    #d3c2faff;
+            --restore:       #5a31b8ff;
+            --restore-border:  #9e70fcff;
         }
 
         html, body {
@@ -133,6 +136,8 @@
         .btn-edit:hover  { background: #dbeafe; }
         .btn-danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger-border); }
         .btn-danger:hover { background: #fee2e2; }
+        .btn-restore {background: var(--restore-bg); color: var(--restore); border-color: var(--restore-border); }
+        .btn-restore:hover { background: #d9bbffff; }
 
         /* ── Panel (Employees & Forms) ────────────────────────────── */
         .panel { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
