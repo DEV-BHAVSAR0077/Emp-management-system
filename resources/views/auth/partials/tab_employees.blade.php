@@ -80,7 +80,7 @@
                                 $roleObj   = $rolesMap->get($u->role);
                                 $roleColor = $roleObj?->color ?? '#374151';
                             @endphp
-                            <span class="badge" style="background:{{ $roleColor }}18; color:{{ $roleColor }}; border:1px solid {{ $roleColor }}35;">
+                            <span class="badge" style="background:{{ $roleColor }}18; color:{{ $roleColor }}; border:1px solid {{ $roleColor }}35; font-size:12px;">
                                 {{ $u->role }}
                             </span>
                         </td>

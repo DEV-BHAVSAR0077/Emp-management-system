@@ -67,7 +67,7 @@
                         <td>
                             @if($pay->agencyVendor)
                                 <div style="font-weight:500;">{{ $pay->agencyVendor->name }}</div>
-                                <span class="badge" style="background:#e5e7eb; color:#374151; font-size:.68rem;">{{ \App\Models\AgencyVendor::TYPES[$pay->agencyVendor->type] ?? '—' }}</span>
+                                <span class="badge" style="background:#e5e7eb; color:#374151; font-size:12px;">{{ \App\Models\AgencyVendor::TYPES[$pay->agencyVendor->type] ?? '—' }}</span>
                             @else
                                 <span style="font-size:.75rem; color:var(--text-muted);">—</span>
                             @endif
@@ -77,9 +77,9 @@
                         </td>
                         <td>
                             @if($pay->payment_type === 0)
-                                <span class="badge" style="background:#fee2e2; color:#991b1b; font-size:.7rem;">Debit</span>
+                                <span class="badge" style="background:#fee2e2; color:#991b1b; font-size:12px;">Debit</span>
                             @else
-                                <span class="badge" style="background:#dcfce7; color:#166534; font-size:.7rem;">Credit</span>
+                                <span class="badge" style="background:#dcfce7; color:#166534; font-size:12px;">Credit</span>
                             @endif
                         </td>
                         <td style="color:var(--text-muted);">{{ $pay->payment_date->format('d M Y') }}</td>

@@ -39,13 +39,13 @@
                         </td>
                         <td>
                             @if($c->subCategories->count() > 0)
-                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                     @foreach($c->subCategories as $sub)
-                                        <span class="badge" style="background:#e0e7ff; color:#3730a3;">{{ $sub->name }}</span>
+                                        <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:12px;">{{ $sub->name }}</span>
                                     @endforeach
                                 </div>
                             @else
-                                <span style="color:var(--text-muted); font-size: 0.85rem;">None</span>
+                                <span style="color:var(--text-muted); font-size:12px;">None</span>
                             @endif
                         </td>
                         <td style="color:var(--text-muted);">{{ $c->updated_at->format('d M Y') }}</td>

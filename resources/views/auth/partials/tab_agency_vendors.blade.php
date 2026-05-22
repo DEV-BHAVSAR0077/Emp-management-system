@@ -61,7 +61,7 @@
                             <div style="font-weight: 500; color:var(--text-color);">{{ $av->name }}</div>
                         </td>
                         <td>
-                            <span class="badge" style="background:#e5e7eb; color:#374151;">{{ App\Models\AgencyVendor::TYPES[$av->type]  }}</span>
+                            <span class="badge" style="background:#e5e7eb; color:#374151; font-size:12px;">{{ App\Models\AgencyVendor::TYPES[$av->type]  }}</span>
                         </td>
                         <td>
                             <div style="font-size: 0.85rem;">
