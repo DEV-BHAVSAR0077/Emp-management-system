@@ -7,8 +7,10 @@ use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\AgencyVendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -16,12 +18,12 @@ class UserController extends Controller
     // Display the dashboard.
     public function dashboard()
     {
-        $todayExpense = \App\Models\Expense::whereDate('expense_date', \Carbon\Carbon::today())->sum('amount');
-        $monthExpense = \App\Models\Expense::whereYear('expense_date', \Carbon\Carbon::now()->year)
-                            ->whereMonth('expense_date', \Carbon\Carbon::now()->month)
+        $todayExpense = Expense::query()->whereDate('expense_date', today())->sum('amount');
+        $monthExpense = Expense::query()->whereYear('expense_date', now()->year)
+                            ->whereMonth('expense_date', now()->month)
                             ->sum('amount');
-        $yearExpense = \App\Models\Expense::whereYear('expense_date', \Carbon\Carbon::now()->year)->sum('amount');
-        $totalBalance = \App\Models\AgencyVendor::sum('balance');
+        $yearExpense = Expense::query()->whereYear('expense_date', now()->year)->sum('amount');
+        $totalBalance = AgencyVendor::query()->sum('balance');
 
         return view('auth.dashboard', [
             'user' => Auth::user(),
@@ -37,14 +39,14 @@ class UserController extends Controller
         $month = $request->input('month', \Carbon\Carbon::now()->month);
         $year = $request->input('year', \Carbon\Carbon::now()->year);
 
-        $expenses = \App\Models\Expense::whereYear('expense_date', $year)
+        $expenses = Expense::whereYear('expense_date', $year)
             ->whereMonth('expense_date', $month)
             ->selectRaw('agency_vendor_id, SUM(amount) as total')
             ->groupBy('agency_vendor_id')
             ->get();
 
         $vendorIds = $expenses->pluck('agency_vendor_id');
-        $vendors = \App\Models\AgencyVendor::whereIn('id', $vendorIds)->get()->keyBy('id');
+        $vendors = AgencyVendor::whereIn('id', $vendorIds)->get()->keyBy('id'); 
 
         $labels = [];
         $data = [];
@@ -72,11 +74,11 @@ class UserController extends Controller
             ->whereYear('expenses.expense_date', $year)
             ->whereMonth('expenses.expense_date', $month)
             ->whereNull('expenses.deleted_at')
-            ->select(
-                \Illuminate\Support\Facades\DB::raw('COALESCE(categories.name, "Uncategorized") as category_name'),
-                \Illuminate\Support\Facades\DB::raw('COALESCE(sub_categories.name, "General") as sub_category_name'),
-                \Illuminate\Support\Facades\DB::raw('SUM(expenses.amount) as total')
-            )
+            ->select([
+                'categories.name as category_name',
+                'sub_categories.name as sub_category_name',
+                DB::raw('SUM(expenses.amount) as total')
+            ])
             ->groupBy('category_name', 'sub_category_name')
             ->get();
 

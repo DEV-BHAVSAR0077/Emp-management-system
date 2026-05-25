@@ -6,6 +6,7 @@ use App\Http\Requests\PaymentRequest;
 use App\Models\AgencyVendor;
 use App\Models\Expense;
 use App\Models\Payment;
+use App\Services\SyncBalance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -86,7 +87,7 @@ class PaymentController extends Controller implements HasMiddleware
     {
         $agencyVendorId = $request->agency_vendor_id;
 
-        Payment::create([
+        $payment = Payment::create([
             'user_id'          => Auth::id(),
             'agency_vendor_id' => $agencyVendorId,
             'amount'           => $request->amount,
@@ -94,6 +95,8 @@ class PaymentController extends Controller implements HasMiddleware
             'notes'            => $request->notes,
             'payment_date'     => $request->payment_date,
         ]);
+
+        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'add', $payment->payment_type);
 
         if ($request->ajax() || $request->wantsJson()) {
             session()->flash('success', 'Payment recorded successfully.');
@@ -123,6 +126,7 @@ class PaymentController extends Controller implements HasMiddleware
      */
     public function update(PaymentRequest $request, Payment $payment)
     {
+        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'remove', $payment->payment_type);
         $payment->update([
             'agency_vendor_id' => $request->agency_vendor_id,
             'amount'           => $request->amount,
@@ -130,6 +134,8 @@ class PaymentController extends Controller implements HasMiddleware
             'notes'            => $request->notes,
             'payment_date'     => $request->payment_date,
         ]);
+
+        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'add', $payment->payment_type);
 
         if ($request->ajax() || $request->wantsJson()) {
             session()->flash('success', 'Payment updated successfully.');
@@ -145,6 +151,7 @@ class PaymentController extends Controller implements HasMiddleware
      */
     public function destroy(Payment $payment)
     {
+        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'remove', $payment->payment_type);
         $payment->delete();
 
         return back()->with('success', 'Payment deleted successfully.');

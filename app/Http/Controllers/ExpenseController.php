@@ -7,6 +7,7 @@ use App\Models\AgencyVendor;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\SubCategory;
+use App\Services\SyncBalance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -55,7 +56,7 @@ class ExpenseController extends Controller
     public function store(ExpanceRequest $request)
     {
 
-        Expense::create([
+        $expense = Expense::create([
             'user_id'                  => Auth::id(),
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
@@ -65,6 +66,8 @@ class ExpenseController extends Controller
             'expense_date'             => $request->expense_date,
             'note'                     => $request->note,
         ]);
+
+        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
 
         return redirect()->route('expenses.index')
                          ->with('success', 'Expense created successfully.');
@@ -88,6 +91,7 @@ class ExpenseController extends Controller
     // Update the specified expense.
     public function update(ExpanceRequest $request, Expense $expense)
     {
+        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'remove');
 
         $expense->update([
             'expense_category_id'      => $request->expense_category_id,
@@ -98,6 +102,7 @@ class ExpenseController extends Controller
             'expense_date'             => $request->expense_date,
             'note'                     => $request->note,
         ]);
+        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
 
         return redirect()->route('expenses.index')
                          ->with('success', 'Expense updated successfully.');
@@ -106,6 +111,7 @@ class ExpenseController extends Controller
     // Soft-delete the specified expense.
     public function destroy(Expense $expense)
     {
+        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'remove');
         $expense->delete();
 
         return back()->with('success', 'Expense deleted successfully.');
@@ -115,6 +121,7 @@ class ExpenseController extends Controller
     public function restore(Expense $expense)
     {
         $expense->restore();
+        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
 
         return back()->with('success', 'Expense restored successfully.');
     }

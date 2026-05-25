@@ -144,7 +144,8 @@
                             legend: {
                                 position: 'right',
                                 labels: {
-                                    font: { family: 'Inter', size: 13 }
+                                    font: { family: 'Inter', size: 13 },
+                                    padding: 15
                                 }
                             },
                             tooltip: {
@@ -238,9 +239,10 @@
                             },
                             plugins: {
                                 legend: {
-                                    position: 'right',
+                                    position: 'top',
                                     labels: {
-                                        font: { family: 'Inter', size: 13 }
+                                        font: { family: 'Inter', size: 13 },
+                                        padding: 7
                                     }
                                 },
                                 tooltip: {
