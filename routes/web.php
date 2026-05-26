@@ -7,6 +7,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AVController;
+use App\Http\Controllers\dashboard;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,16 +43,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', [UserController::class, 'dashboard'])
+    Route::get('/dashboard', [dashboard::class, 'dashboard'])
          ->name('dashboard');
 
-    Route::get('/dashboard/chart-data', [UserController::class, 'getChartData'])
+    Route::get('/dashboard/chart-data', [dashboard::class, 'getChartData'])
          ->name('dashboard.chart_data');
 
-    Route::get('/dashboard/stacked-chart-data', [UserController::class, 'getStackedChartData'])
+    Route::get('/dashboard/stacked-chart-data', [dashboard::class, 'getStackedChartData'])
          ->name('dashboard.stacked_chart_data');
 
-    Route::get('/dashboard/line-chart-data', [UserController::class, 'getLineChartData'])
+    Route::get('/dashboard/line-chart-data', [dashboard::class, 'getLineChartData'])
          ->name('dashboard.line_chart_data');
 
     // Users List
