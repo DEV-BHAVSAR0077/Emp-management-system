@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Expense;
 use App\Models\SubCategory;
 use App\Services\SyncBalance;
+use App\Services\VendorLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -67,7 +68,10 @@ class ExpenseController extends Controller
             'note'                     => $request->note,
         ]);
 
-        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
+        $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
+        if ($expense->agency_vendor_id) {
+            VendorLedgerService::addEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Added');
+        }
 
         return redirect()->route('expenses.index')
                          ->with('success', 'Expense created successfully.');
@@ -91,18 +95,41 @@ class ExpenseController extends Controller
     // Update the specified expense.
     public function update(ExpanceRequest $request, Expense $expense)
     {
-        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'remove');
+        $oldVendorId = $expense->agency_vendor_id;
+        $oldAmount = $expense->amount;
+
+        $newVendorId = $request->agency_vendor_id ?: null;
+        $newAmount = $request->amount;
+
+        $oldBalance = SyncBalance::updateBalance($oldVendorId, $oldAmount, 'expense', 'remove');
+        if ($oldVendorId && $oldVendorId != $newVendorId) {
+            VendorLedgerService::addEntry($expense, $oldVendorId, $oldAmount, 'expense', $oldBalance, 'Expense Removed (Vendor Changed)');
+        }
 
         $expense->update([
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
-            'agency_vendor_id'         => $request->agency_vendor_id ?: null,
+            'agency_vendor_id'         => $newVendorId,
             'name'                     => $request->name,
-            'amount'                   => $request->amount,
+            'amount'                   => $newAmount,
             'expense_date'             => $request->expense_date,
             'note'                     => $request->note,
         ]);
-        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
+
+        $newBalance = SyncBalance::updateBalance($newVendorId, $newAmount, 'expense', 'add');
+        if ($newVendorId) {
+            if ($oldVendorId == $newVendorId) {
+                VendorLedgerService::addUpdateEntry(
+                    $expense, 
+                    $newVendorId, 
+                    $oldAmount, 'expense', null, 
+                    $newAmount, 'expense', null, 
+                    $newBalance, 'Expense Updated'
+                );
+            } else {
+                VendorLedgerService::addEntry($expense, $newVendorId, $newAmount, 'expense', $newBalance, 'Expense Added (Vendor Changed)');
+            }
+        }
 
         return redirect()->route('expenses.index')
                          ->with('success', 'Expense updated successfully.');
@@ -111,7 +138,10 @@ class ExpenseController extends Controller
     // Soft-delete the specified expense.
     public function destroy(Expense $expense)
     {
-        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'remove');
+        $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'remove');
+        if ($expense->agency_vendor_id) {
+            VendorLedgerService::addEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Removed');
+        }
         $expense->delete();
 
         return back()->with('success', 'Expense deleted successfully.');
@@ -121,7 +151,10 @@ class ExpenseController extends Controller
     public function restore(Expense $expense)
     {
         $expense->restore();
-        SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
+        $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
+        if ($expense->agency_vendor_id) {
+            VendorLedgerService::addEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Restored');
+        }
 
         return back()->with('success', 'Expense restored successfully.');
     }

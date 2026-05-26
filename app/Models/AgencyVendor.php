@@ -56,4 +56,9 @@ class AgencyVendor extends Model
     {
         return $this->hasMany(\App\Models\Payment::class, 'agency_vendor_id');
     }
+
+    public function ledgers(): HasMany
+    {
+        return $this->hasMany(\App\Models\VendorLedger::class, 'vendor_id');
+    }
 }

@@ -110,69 +110,52 @@ class AVController extends Controller implements HasMiddleware
         return back()->with('success', 'Agency/Vendor deleted successfully.');
     }
 
+    /*
     public function getPayments(Request $request, AgencyVendor $agencyVendor)
     {
-        $expenses = DB::table('expenses')
-            ->select('id', 'amount', DB::raw("'expense' as record_type"), DB::raw('NULL as payment_type'), 'expense_date as record_date', 'note as notes', 'created_at')
-            ->where('agency_vendor_id', $agencyVendor->id)
-            ->whereNull('deleted_at');
+        // OLD CODE COMMENTED OUT
+        ...
+    }
+    */
 
-        $payments = DB::table('payments')
-            ->select('id', 'amount', DB::raw("'payment' as record_type"), 'payment_type', 'payment_date as record_date', 'notes', 'created_at')
-            ->where('agency_vendor_id', $agencyVendor->id)
-            ->whereNull('deleted_at');
-
-        $history = $expenses->unionAll($payments)
-            ->orderBy('record_date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(8);
+    public function getVendorLedger(Request $request, AgencyVendor $agencyVendor)
+    {
+        $ledgers = \App\Models\VendorLedger::where('vendor_id', $agencyVendor->id)
+            ->with('loggable')
+            ->orderBy('timestamp', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(15);
 
         // Format dates and amounts for JSON response
-        $history->getCollection()->transform(function ($item) {
-            $date = \Carbon\Carbon::parse($item->record_date);
+        $ledgers->getCollection()->transform(function ($item) {
+            $date = \Carbon\Carbon::parse($item->log_at);
             
             $typeLabel = '';
-            $color = '';
-            $badgeBg = '';
-            $badgeColor = '';
-            
-            if ($item->record_type === 'expense') {
+            if ($item->loggable_type === \App\Models\Expense::class) {
                 $typeLabel = 'Expense';
-                $color = 'var(--text)'; // Default text color
-                $badgeBg = '#e0e7ff'; // Indigo bg
-                $badgeColor = '#3730a3'; // Indigo text
+            } elseif ($item->loggable_type === \App\Models\Payment::class) {
+                $typeLabel = 'Payment';
             } else {
-                if ($item->payment_type == 1) { // Credit
-                    $typeLabel = 'Credit';
-                    $color = 'var(--success)';
-                    $badgeBg = '#dcfce7';
-                    $badgeColor = '#166534';
-                } else { // Debit
-                    $typeLabel = 'Debit';
-                    $color = 'var(--danger)';
-                    $badgeBg = '#fee2e2';
-                    $badgeColor = '#991b1b';
-                }
+                $typeLabel = class_basename($item->loggable_type);
             }
 
             return [
                 'id' => $item->id,
-                'amount_formatted' => number_format($item->amount, 2),
-                'type_label' => $typeLabel,
                 'date_formatted' => $date->format('d M Y'),
-                'notes' => $item->notes,
-                'color' => $color,
-                'badge_bg' => $badgeBg,
-                'badge_color' => $badgeColor
+                'type_label' => $typeLabel,
+                'debit_formatted' => $item->debit > 0 ? number_format($item->debit, 2) : '-',
+                'credit_formatted' => $item->credit > 0 ? number_format($item->credit, 2) : '-',
+                'balance_formatted' => $item->balance < 0 ? '-₹' . number_format(abs($item->balance), 2) : '₹' . number_format($item->balance, 2),
+                'system_note' => $item->system_note,
             ];
         });
 
         return response()->json([
-            'payments' => $history->items(),
+            'ledgers' => $ledgers->items(),
             'pagination' => [
-                'current_page' => $history->currentPage(),
-                'last_page' => $history->lastPage(),
-                'total' => $history->total(),
+                'current_page' => $ledgers->currentPage(),
+                'last_page' => $ledgers->lastPage(),
+                'total' => $ledgers->total(),
             ],
             'agency_vendor_name' => $agencyVendor->name,
             'final_balance' => (float) $agencyVendor->balance

@@ -188,7 +188,7 @@
     ">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color, #e5e7eb);">
             <div style="font-weight:700; font-size:1rem; color:var(--text-color);">
-                Payment History: <span id="view-payments-vendor-name"></span>
+                Ledger History: <span id="view-payments-vendor-name"></span>
                 <span id="view-payments-final-balance" style="margin-left:1rem; font-size:0.9rem; padding:0.2rem 0.6rem; border-radius:6px; display:inline-block;"></span>
             </div>
             <button type="button" id="btn-close-view-payments" style="background:none; border:none; cursor:pointer; color:var(--text-muted); padding:.25rem; border-radius:6px;" title="Close">
@@ -204,9 +204,11 @@
                     <thead>
                         <tr>
                             <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 130px;">Date</th>
-                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 140px;">Amount</th>
-                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 90px;">Type</th>
-                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb);">Notes</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 120px;">Transaction</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 100px;">Debit</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 100px;">Credit</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 120px;">Balance</th>
+                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb);">Details</th>
                         </tr>
                     </thead>
                     <tbody id="view-payments-tbody">
@@ -253,7 +255,7 @@
         loading.style.display = 'block';
         content.style.display = 'none';
         
-        fetch(`/agency-vendors/${vendorId}/payments?page=${page}`, {
+        fetch(`/agency-vendors/${vendorId}/ledger?page=${page}`, {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -281,28 +283,28 @@
                 }
             }
 
-            renderPayments(data.payments);
+            renderPayments(data.ledgers);
             renderPagination(data.pagination);
             
             loading.style.display = 'none';
             content.style.display = 'block';
         })
         .catch(err => {
-            console.error('Error fetching payments:', err);
+            console.error('Error fetching ledger:', err);
             loading.style.display = 'none';
         });
     }
 
-    function renderPayments(payments) {
+    function renderPayments(ledgers) {
         tbody.innerHTML = '';
-        if (payments.length === 0) {
+        if (ledgers.length === 0) {
             table.style.display = 'none';
             emptyState.style.display = 'block';
         } else {
             table.style.display = 'table';
             emptyState.style.display = 'none';
             
-            payments.forEach(p => {
+            ledgers.forEach(p => {
                 const tr = document.createElement('tr');
                 
                 const tdDate = document.createElement('td');
@@ -311,34 +313,49 @@
                 tdDate.style.color = 'var(--text-muted)';
                 tdDate.textContent = p.date_formatted;
                 
-                const tdAmount = document.createElement('td');
-                tdAmount.style.padding = '0.75rem';
-                tdAmount.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
-                tdAmount.style.color = p.color;
-                tdAmount.style.fontWeight = '500';
-                tdAmount.textContent = '₹' + p.amount_formatted;
-                
                 const tdType = document.createElement('td');
                 tdType.style.padding = '0.75rem';
                 tdType.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
                 const badge = document.createElement('span');
                 badge.className = 'badge';
                 badge.style.fontSize = '0.7rem';
-                badge.style.background = p.badge_bg;
-                badge.style.color = p.badge_color;
+                badge.style.background = '#e0e7ff';
+                badge.style.color = '#3730a3';
                 badge.textContent = p.type_label;
                 tdType.appendChild(badge);
                 
+                const tdDebit = document.createElement('td');
+                tdDebit.style.padding = '0.75rem';
+                tdDebit.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                tdDebit.style.color = 'var(--danger)';
+                tdDebit.style.fontWeight = '500';
+                tdDebit.textContent = p.debit_formatted !== '-' ? '₹' + p.debit_formatted : '-';
+
+                const tdCredit = document.createElement('td');
+                tdCredit.style.padding = '0.75rem';
+                tdCredit.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                tdCredit.style.color = 'var(--success)';
+                tdCredit.style.fontWeight = '500';
+                tdCredit.textContent = p.credit_formatted !== '-' ? '₹' + p.credit_formatted : '-';
+
+                const tdBalance = document.createElement('td');
+                tdBalance.style.padding = '0.75rem';
+                tdBalance.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
+                tdBalance.style.fontWeight = '600';
+                tdBalance.textContent = p.balance_formatted;
+
                 const tdNotes = document.createElement('td');
                 tdNotes.style.padding = '0.75rem';
                 tdNotes.style.borderBottom = '1px solid var(--border-color, #e5e7eb)';
                 tdNotes.style.color = 'var(--text-muted)';
                 tdNotes.style.fontSize = '0.85rem';
-                tdNotes.textContent = p.notes || '—';
+                tdNotes.textContent = p.system_note || '—';
                 
                 tr.appendChild(tdDate);
-                tr.appendChild(tdAmount);
                 tr.appendChild(tdType);
+                tr.appendChild(tdDebit);
+                tr.appendChild(tdCredit);
+                tr.appendChild(tdBalance);
                 tr.appendChild(tdNotes);
                 tbody.appendChild(tr);
             });

@@ -7,6 +7,7 @@ use App\Models\AgencyVendor;
 use App\Models\Expense;
 use App\Models\Payment;
 use App\Services\SyncBalance;
+use App\Services\VendorLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -96,7 +97,10 @@ class PaymentController extends Controller implements HasMiddleware
             'payment_date'     => $request->payment_date,
         ]);
 
-        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'add', $payment->payment_type);
+        $newBalance = SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'add', $payment->payment_type);
+        if ($payment->agency_vendor_id) {
+            VendorLedgerService::addEntry($payment, $payment->agency_vendor_id, $payment->amount, 'payment', $newBalance, 'Payment Added', $payment->payment_type);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             session()->flash('success', 'Payment recorded successfully.');
@@ -126,16 +130,41 @@ class PaymentController extends Controller implements HasMiddleware
      */
     public function update(PaymentRequest $request, Payment $payment)
     {
-        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'remove', $payment->payment_type);
+        $oldVendorId = $payment->agency_vendor_id;
+        $oldAmount = $payment->amount;
+        $oldPaymentType = $payment->payment_type;
+
+        $newVendorId = $request->agency_vendor_id;
+        $newAmount = $request->amount;
+        $newPaymentType = $request->payment_type;
+
+        $oldBalance = SyncBalance::updateBalance($oldVendorId, $oldAmount, 'payment', 'remove', $oldPaymentType);
+        if ($oldVendorId && $oldVendorId != $newVendorId) {
+            VendorLedgerService::addEntry($payment, $oldVendorId, $oldAmount, 'payment', $oldBalance, 'Payment Removed (Vendor Changed)', $oldPaymentType);
+        }
+
         $payment->update([
-            'agency_vendor_id' => $request->agency_vendor_id,
-            'amount'           => $request->amount,
-            'payment_type'     => $request->payment_type,
+            'agency_vendor_id' => $newVendorId,
+            'amount'           => $newAmount,
+            'payment_type'     => $newPaymentType,
             'notes'            => $request->notes,
             'payment_date'     => $request->payment_date,
         ]);
 
-        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'add', $payment->payment_type);
+        $newBalance = SyncBalance::updateBalance($newVendorId, $newAmount, 'payment', 'add', $newPaymentType);
+        if ($newVendorId) {
+            if ($oldVendorId == $newVendorId) {
+                VendorLedgerService::addUpdateEntry(
+                    $payment, 
+                    $newVendorId, 
+                    $oldAmount, 'payment', $oldPaymentType, 
+                    $newAmount, 'payment', $newPaymentType, 
+                    $newBalance, 'Payment Updated'
+                );
+            } else {
+                VendorLedgerService::addEntry($payment, $newVendorId, $newAmount, 'payment', $newBalance, 'Payment Added (Vendor Changed)', $newPaymentType);
+            }
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             session()->flash('success', 'Payment updated successfully.');
@@ -151,7 +180,10 @@ class PaymentController extends Controller implements HasMiddleware
      */
     public function destroy(Payment $payment)
     {
-        SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'remove', $payment->payment_type);
+        $newBalance = SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'remove', $payment->payment_type);
+        if ($payment->agency_vendor_id) {
+            VendorLedgerService::addRemoveEntry($payment, $payment->agency_vendor_id, $payment->amount, 'payment', $newBalance, 'Payment Removed', $payment->payment_type);
+        }
         $payment->delete();
 
         return back()->with('success', 'Payment deleted successfully.');

@@ -47,5 +47,8 @@ class Payment extends Model
     {
         return $this->belongsTo(AgencyVendor::class, 'agency_vendor_id')->withTrashed();
     }
-
+    public function ledgers()
+    {
+        return $this->morphMany(VendorLedger::class, 'loggable');
+    }
 }
