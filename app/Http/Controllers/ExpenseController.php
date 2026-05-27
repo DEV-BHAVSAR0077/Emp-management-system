@@ -103,7 +103,7 @@ class ExpenseController extends Controller
 
         $oldBalance = SyncBalance::updateBalance($oldVendorId, $oldAmount, 'expense', 'remove');
         if ($oldVendorId && $oldVendorId != $newVendorId) {
-            VendorLedgerService::addEntry($expense, $oldVendorId, $oldAmount, 'expense', $oldBalance, 'Expense Removed (Vendor Changed)');
+            VendorLedgerService::addRemoveEntry($expense, $oldVendorId, $oldAmount, 'expense', $oldBalance, 'Expense Removed (Vendor Changed)');
         }
 
         $expense->update([
@@ -140,7 +140,7 @@ class ExpenseController extends Controller
     {
         $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'remove');
         if ($expense->agency_vendor_id) {
-            VendorLedgerService::addEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Removed');
+            VendorLedgerService::addRemoveEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Removed');
         }
         $expense->delete();
 

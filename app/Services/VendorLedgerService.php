@@ -82,30 +82,20 @@ class VendorLedgerService
     public static function addRemoveEntry(
         Model $loggable,
         int $vendorId,
-        float $oldAmount,
-        string $oldType,
-        ?int $oldPaymentType,
-        float $newAmount,
-        string $newType,
-        ?int $newPaymentType,
+        float $amount,
+        string $type,
         float $runningBalance,
-        string $systemNote
+        string $systemNote,
+        ?int $paymentType = null
     ){
         $debit = 0;
         $credit = 0;
 
         // Reverse old amount
-        if ($oldType === 'expense' || $oldPaymentType === 0) {
-            $credit += $oldAmount; // Old was Debit, reverse by putting in Credit
+        if ($type === 'expense' || $paymentType === 0) {
+            $credit = $amount; // Old was Debit, reverse by putting in Credit
         } else {
-            $debit += $oldAmount;  // Old was Credit, reverse by putting in Debit
-        }
-
-        // Apply new amount
-        if ($newType === 'expense' || $newPaymentType === 0) {
-            $debit += $newAmount;
-        } else {
-            $credit += $newAmount;
+            $debit = $amount;  // Old was Credit, reverse by putting in Debit
         }
 
         VendorLedger::create([
