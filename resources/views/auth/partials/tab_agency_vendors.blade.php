@@ -195,6 +195,22 @@
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
             </button>
         </div>
+        
+        <div style="padding: 1rem 1.5rem; background: var(--surface-alt, #f9fafb); border-bottom: 1px solid var(--border-color, #e5e7eb); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label style="font-size: 0.85rem; font-weight: 500;">Filter Dates:</label>
+                <input type="date" id="ledger-start-date" class="form-control form-control-sm" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; font-size: 0.85rem;" />
+                <span style="font-size: 0.85rem; color: var(--text-muted);">to</span>
+                <input type="date" id="ledger-end-date" class="form-control form-control-sm" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; font-size: 0.85rem;" />
+                <button type="button" id="btn-filter-ledger" class="btn btn-primary btn-sm" style="padding: 0.25rem 0.75rem;">Apply</button>
+                <button type="button" id="btn-clear-ledger-filter" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0.75rem;">Clear</button>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" id="btn-download-csv" class="btn btn-sm" style="background: #10b981; color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">Download CSV</button>
+                <button type="button" id="btn-download-pdf" class="btn btn-sm" style="background: #ef4444; color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">Download PDF</button>
+            </div>
+        </div>
+
         <div style="padding:1.5rem; overflow-y:auto; flex:1;">
             <div id="view-payments-loading" style="display:none; text-align:center; padding:2rem 0; color:var(--text-muted);">
                 Loading payments...
@@ -236,13 +252,28 @@
     const loading = document.getElementById('view-payments-loading');
     const content = document.getElementById('view-payments-content');
     const vendorNameEl = document.getElementById('view-payments-vendor-name');
+    
+    const startDateInput = document.getElementById('ledger-start-date');
+    const endDateInput = document.getElementById('ledger-end-date');
+    const btnFilter = document.getElementById('btn-filter-ledger');
+    const btnClearFilter = document.getElementById('btn-clear-ledger-filter');
+    const btnDownloadCsv = document.getElementById('btn-download-csv');
+    const btnDownloadPdf = document.getElementById('btn-download-pdf');
 
     let currentVendorId = null;
+    let currentStartDate = '';
+    let currentEndDate = '';
 
     function openModal(vendorId) {
         currentVendorId = vendorId;
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        
+        startDateInput.value = '';
+        endDateInput.value = '';
+        currentStartDate = '';
+        currentEndDate = '';
+        
         fetchPayments(vendorId, 1);
     }
 
@@ -255,7 +286,11 @@
         loading.style.display = 'block';
         content.style.display = 'none';
         
-        fetch(`/agency-vendors/${vendorId}/ledger?page=${page}`, {
+        let url = `/agency-vendors/${vendorId}/ledger?page=${page}`;
+        if (currentStartDate) url += `&start_date=${currentStartDate}`;
+        if (currentEndDate) url += `&end_date=${currentEndDate}`;
+        
+        fetch(url, {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -403,6 +438,40 @@
         btn.addEventListener('click', function() {
             openModal(this.dataset.id);
         });
+    });
+
+    btnFilter.addEventListener('click', function() {
+        currentStartDate = startDateInput.value;
+        currentEndDate = endDateInput.value;
+        fetchPayments(currentVendorId, 1);
+    });
+
+    btnClearFilter.addEventListener('click', function() {
+        startDateInput.value = '';
+        endDateInput.value = '';
+        currentStartDate = '';
+        currentEndDate = '';
+        fetchPayments(currentVendorId, 1);
+    });
+
+    btnDownloadCsv.addEventListener('click', function() {
+        if(!currentVendorId) return;
+        let url = `/agency-vendors/${currentVendorId}/ledger/csv`;
+        let params = [];
+        if (currentStartDate) params.push(`start_date=${currentStartDate}`);
+        if (currentEndDate) params.push(`end_date=${currentEndDate}`);
+        if (params.length > 0) url += '?' + params.join('&');
+        window.location.href = url;
+    });
+
+    btnDownloadPdf.addEventListener('click', function() {
+        if(!currentVendorId) return;
+        let url = `/agency-vendors/${currentVendorId}/ledger/pdf`;
+        let params = [];
+        if (currentStartDate) params.push(`start_date=${currentStartDate}`);
+        if (currentEndDate) params.push(`end_date=${currentEndDate}`);
+        if (params.length > 0) url += '?' + params.join('&');
+        window.open(url, '_blank');
     });
 
     closeBtn.addEventListener('click', closeModal);

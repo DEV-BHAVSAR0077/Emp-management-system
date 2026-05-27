@@ -140,7 +140,7 @@ class PaymentController extends Controller implements HasMiddleware
 
         $oldBalance = SyncBalance::updateBalance($oldVendorId, $oldAmount, 'payment', 'remove', $oldPaymentType);
         if ($oldVendorId && $oldVendorId != $newVendorId) {
-            VendorLedgerService::addRemoveEntry($payment, $oldVendorId, $oldAmount, 'payment', $oldBalance, 'Payment Removed (Vendor Changed)', $oldPaymentType);
+            VendorLedgerService::addRemoveEntry($payment, $oldVendorId, $oldAmount, 'payment', $oldBalance, 'Payment Deleted (Vendor Changed)', $oldPaymentType);
         }
 
         $payment->update([
@@ -182,7 +182,7 @@ class PaymentController extends Controller implements HasMiddleware
     {
         $newBalance = SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'remove', $payment->payment_type);
         if ($payment->agency_vendor_id) {
-            VendorLedgerService::addRemoveEntry($payment, $payment->agency_vendor_id, $payment->amount, 'payment', $newBalance, 'Payment Removed', $payment->payment_type);
+            VendorLedgerService::addRemoveEntry($payment, $payment->agency_vendor_id, $payment->amount, 'payment', $newBalance, 'Payment Deleted', $payment->payment_type);
         }
         $payment->delete();
 

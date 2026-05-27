@@ -50,21 +50,34 @@ class VendorLedgerService
         float $runningBalance,
         string $systemNote
     ) {
+        $oldNet = ($oldType === 'expense' || $oldPaymentType === 0) ? $oldAmount : -$oldAmount;
+        $newNet = ($newType === 'expense' || $newPaymentType === 0) ? $newAmount : -$newAmount;
+
+        $difference = $newNet - $oldNet;
+
+        // If no change in net amount, do not create an entry
+        if ($difference == 0) {
+            return;
+        }
+
         $debit = 0;
         $credit = 0;
 
-        // Reverse old amount
-        if ($oldType === 'expense' || $oldPaymentType === 0) {
-            $credit += $oldAmount; // Old was Debit, reverse by putting in Credit
+        if ($difference > 0) {
+            $debit = $difference;
         } else {
-            $debit += $oldAmount;  // Old was Credit, reverse by putting in Debit
+            $credit = -$difference;
         }
 
-        // Apply new amount
-        if ($newType === 'expense' || $newPaymentType === 0) {
-            $debit += $newAmount;
-        } else {
-            $credit += $newAmount;
+        $entityName = ucfirst($newType);
+        $customNote = $systemNote;
+
+        if ($newAmount > $oldAmount) {
+            $customNote = $entityName . ' Increased';
+        } elseif ($newAmount < $oldAmount) {
+            $customNote = $entityName . ' Reduced';
+        } elseif ($oldType !== $newType || $oldPaymentType !== $newPaymentType) {
+            $customNote = $entityName . ' Updated';
         }
 
         VendorLedger::create([
@@ -75,7 +88,7 @@ class VendorLedgerService
             'debit'         => $debit,
             'credit'        => $credit,
             'balance'       => -$runningBalance,
-            'system_note'   => $systemNote,
+            'system_note'   => $customNote,
         ]);
     }
 

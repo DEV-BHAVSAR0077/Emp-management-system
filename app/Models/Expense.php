@@ -53,7 +53,9 @@ class Expense extends Model
     public function agencyVendor(): BelongsTo
     {
         return $this->belongsTo(AgencyVendor::class, 'agency_vendor_id')->withTrashed();
-    }    public function ledgers()
+    }
+    
+    public function ledgers()
     {
         return $this->morphMany(VendorLedger::class, 'loggable');
     }

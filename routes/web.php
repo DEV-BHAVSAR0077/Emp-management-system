@@ -154,6 +154,10 @@ Route::middleware('auth')->group(function () {
     // ── Agency & Vendor Module ────────────────────────────────────────────
     Route::get('/agency-vendors/{agencyVendor}/ledger', [AVController::class, 'getVendorLedger'])
          ->name('agency_vendors.ledger');
+    Route::get('/agency-vendors/{agencyVendor}/ledger/csv', [AVController::class, 'downloadLedgerCsv'])
+         ->name('agency_vendors.ledger.csv');
+    Route::get('/agency-vendors/{agencyVendor}/ledger/pdf', [AVController::class, 'downloadLedgerPdf'])
+         ->name('agency_vendors.ledger.pdf');
     Route::resource('agency-vendors', AVController::class)
          ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
          ->names('agency_vendors');
