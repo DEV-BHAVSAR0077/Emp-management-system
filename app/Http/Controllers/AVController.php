@@ -121,9 +121,17 @@ class AVController extends Controller implements HasMiddleware
     private function getLedgerQuery(Request $request, AgencyVendor $agencyVendor)
     {
         $query = \App\Models\VendorLedger::where('vendor_id', $agencyVendor->id)
-            ->with('loggable')
-            ->orderBy('timestamp', 'desc')
-            ->orderBy('id', 'desc');
+            ->with('loggable');
+
+        if ($request->filled('sort_order') && in_array(strtolower($request->sort_order), ['asc', 'desc'])) {
+            $direction = strtolower($request->sort_order);
+            $query->orderBy('log_at', $direction)
+                  ->orderBy('id', $direction);
+        } else {
+            // Default Database Order
+            $query->orderBy('timestamp', 'desc')
+                  ->orderBy('id', 'desc');
+        }
 
         if ($request->filled('start_date')) {
             $query->whereDate('log_at', '>=', $request->start_date);

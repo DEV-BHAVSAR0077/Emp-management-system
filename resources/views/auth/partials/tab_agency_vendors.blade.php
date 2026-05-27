@@ -219,7 +219,12 @@
                 <table style="width:100%; margin-bottom:1rem; border-collapse:collapse;" id="view-payments-table">
                     <thead>
                         <tr>
-                            <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 130px;">Date</th>
+                            <th id="ledger-sort-date" style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 130px; cursor:pointer; user-select:none;" title="Click to sort by exact Date and Time">
+                                Date
+                                <span id="ledger-sort-icon" style="margin-left:4px; font-size:0.8rem;">
+                                    <svg style="display:inline; vertical-align:middle; opacity:0.4;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg>
+                                </span>
+                            </th>
                             <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 120px;">Transaction</th>
                             <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 100px;">Debit</th>
                             <th style="text-align:left; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border-color, #e5e7eb); width: 100px;">Credit</th>
@@ -263,6 +268,23 @@
     let currentVendorId = null;
     let currentStartDate = '';
     let currentEndDate = '';
+    let currentSortOrder = ''; // '', 'asc', 'desc'
+
+    const sortIconDefault = '<svg style="display:inline; vertical-align:middle; opacity:0.4;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg>';
+    const sortIconAsc = '<svg style="display:inline; vertical-align:middle; color:#4f46e5;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
+    const sortIconDesc = '<svg style="display:inline; vertical-align:middle; color:#4f46e5;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+    function updateSortIcon() {
+        const iconContainer = document.getElementById('ledger-sort-icon');
+        if (!iconContainer) return;
+        if (currentSortOrder === 'asc') {
+            iconContainer.innerHTML = sortIconAsc;
+        } else if (currentSortOrder === 'desc') {
+            iconContainer.innerHTML = sortIconDesc;
+        } else {
+            iconContainer.innerHTML = sortIconDefault;
+        }
+    }
 
     function openModal(vendorId) {
         currentVendorId = vendorId;
@@ -273,6 +295,8 @@
         endDateInput.value = '';
         currentStartDate = '';
         currentEndDate = '';
+        currentSortOrder = '';
+        updateSortIcon();
         
         fetchPayments(vendorId, 1);
     }
@@ -289,6 +313,7 @@
         let url = `/agency-vendors/${vendorId}/ledger?page=${page}`;
         if (currentStartDate) url += `&start_date=${currentStartDate}`;
         if (currentEndDate) url += `&end_date=${currentEndDate}`;
+        if (currentSortOrder) url += `&sort_order=${currentSortOrder}`;
         
         fetch(url, {
             headers: {
@@ -460,6 +485,7 @@
         let params = [];
         if (currentStartDate) params.push(`start_date=${currentStartDate}`);
         if (currentEndDate) params.push(`end_date=${currentEndDate}`);
+        if (currentSortOrder) params.push(`sort_order=${currentSortOrder}`);
         if (params.length > 0) url += '?' + params.join('&');
         window.location.href = url;
     });
@@ -470,12 +496,28 @@
         let params = [];
         if (currentStartDate) params.push(`start_date=${currentStartDate}`);
         if (currentEndDate) params.push(`end_date=${currentEndDate}`);
+        if (currentSortOrder) params.push(`sort_order=${currentSortOrder}`);
         if (params.length > 0) url += '?' + params.join('&');
         window.open(url, '_blank');
     });
 
     closeBtn.addEventListener('click', closeModal);
     backdrop.addEventListener('click', closeModal);
+
+    const thSortDate = document.getElementById('ledger-sort-date');
+    if (thSortDate) {
+        thSortDate.addEventListener('click', function() {
+            if (currentSortOrder === '') {
+                currentSortOrder = 'asc';
+            } else if (currentSortOrder === 'asc') {
+                currentSortOrder = 'desc';
+            } else {
+                currentSortOrder = '';
+            }
+            updateSortIcon();
+            fetchPayments(currentVendorId, 1);
+        });
+    }
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
