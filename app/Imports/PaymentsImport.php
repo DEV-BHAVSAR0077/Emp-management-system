@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -73,7 +74,7 @@ class PaymentsImport implements ToCollection, WithHeadingRow
                 $dateStr = $row['payment_date'];
                 $paymentDate = null;
                 if (is_numeric($dateStr)) {
-                    $paymentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateStr)->format('Y-m-d');
+                    $paymentDate = Date::excelToDateTimeObject($dateStr)->format('Y-m-d');
                 } else {
                     $parsed = strtotime($dateStr);
                     if (!$parsed) {
