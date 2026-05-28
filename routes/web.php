@@ -108,6 +108,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/expenses', [ExpenseController::class, 'index'])
          ->name('expenses.index')->middleware('permission:view-expense');
 
+    Route::get('/expenses/template', [ExpenseController::class, 'downloadTemplate'])
+         ->name('expenses.template')->middleware('permission:create-expense');
+
+    Route::post('/expenses/import', [ExpenseController::class, 'importExcel'])
+         ->name('expenses.import')->middleware('permission:create-expense');
+
     Route::get('/expenses/create', [ExpenseController::class, 'create'])
          ->name('expenses.create')->middleware('permission:create-expense');
 
@@ -163,6 +169,12 @@ Route::middleware('auth')->group(function () {
          ->names('agency_vendors');
 
     // ── Payment Module ────────────────────────────────────────────────────
+    Route::get('/payments/template', [PaymentController::class, 'downloadTemplate'])
+         ->name('payments.template')->middleware('permission:create-payment');
+
+    Route::post('/payments/import', [PaymentController::class, 'importExcel'])
+         ->name('payments.import')->middleware('permission:create-payment');
+
     Route::resource('payments', PaymentController::class)
          ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
          ->names('payments');

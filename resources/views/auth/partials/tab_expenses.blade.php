@@ -21,10 +21,17 @@
                     <button type="submit" class="btn btn-ghost btn-sm" id="btn-expense-search">Search</button>
                 </form>
                 @can('create-expense')
-                <a href="{{ route('expenses.create') }}" class="btn btn-primary btn-sm" id="btn-open-create-expense">
-                    <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
-                    Add Expense
-                </a>
+                <div class="dropdown" style="position:relative; display:inline-block;">
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('add-expense-dropdown').style.display = document.getElementById('add-expense-dropdown').style.display === 'none' ? 'block' : 'none';">
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z"/></svg>
+                        Add Expense
+                    </button>
+                    <div id="add-expense-dropdown" class="dropdown-content" style="display:none; position:absolute; right:0; background-color:var(--card-bg, #fff); min-width:180px; box-shadow:0px 8px 16px 0px rgba(0,0,0,0.15); z-index:100; border-radius:8px; margin-top:5px; border:1px solid var(--border-color, #e5e7eb); overflow:hidden;">
+                        <a href="javascript:void(0)" onclick="openImportModal(); document.getElementById('add-expense-dropdown').style.display = 'none';" style="color:var(--text-color); padding:10px 16px; text-decoration:none; display:block; font-size:13px; border-bottom:1px solid var(--border-color, #f3f4f6); transition:background 0.2s;" onmouseover="this.style.background='var(--hover-bg, #f9fafb)'" onmouseout="this.style.background='transparent'">Upload Excel</a>
+                        <a href="{{ route('expenses.template') }}" style="color:var(--text-color); padding:10px 16px; text-decoration:none; display:block; font-size:13px; border-bottom:1px solid var(--border-color, #f3f4f6); transition:background 0.2s;" onmouseover="this.style.background='var(--hover-bg, #f9fafb)'" onmouseout="this.style.background='transparent'">Download Template</a>
+                        <a href="{{ route('expenses.create') }}" style="color:var(--text-color); padding:10px 16px; text-decoration:none; display:block; font-size:13px; transition:background 0.2s;" onmouseover="this.style.background='var(--hover-bg, #f9fafb)'" onmouseout="this.style.background='transparent'">Add Expense Manually</a>
+                    </div>
+                </div>
                 @endcan
             </div>
         </div>
@@ -308,4 +315,91 @@
     });
 })();
 </script>
+
+{{-- ═══════════ Import Excel Modal ═══════════ --}}
+<div id="modal-import-expense" style="display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;">
+    <div id="modal-import-backdrop" style="position:absolute; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(3px);"></div>
+    <div id="modal-import-dialog" style="
+        position:relative; z-index:1; background:var(--card-bg, #fff);
+        border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+        width:100%; max-width:450px; margin:1rem;
+        animation:modalSlideIn .2s ease;
+    ">
+        <form action="{{ route('expenses.import') }}" method="POST" enctype="multipart/form-data" id="form-import-expense">
+            @csrf
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color, #e5e7eb);">
+                <div style="font-weight:700; font-size:1rem; color:var(--text-color);">Import Expenses from Excel</div>
+                <button type="button" onclick="closeImportModal()" style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:1.2rem;">&times;</button>
+            </div>
+            <div style="padding:1.5rem;">
+                <label style="display:block; font-size:.85rem; font-weight:600; color:var(--text-color); margin-bottom:.5rem;">Upload File (.xlsx, .xls, .csv)</label>
+                <div style="position:relative; border:2px dashed var(--border-color, #d1d5db); border-radius:8px; padding:2rem; text-align:center; background:var(--hover-bg, #f9fafb); transition:border-color 0.2s;" id="import-dropzone">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted); margin-bottom:10px; display:inline-block;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <div style="font-size:.9rem; color:var(--text-muted); margin-bottom:.5rem;">Drag & drop your file here, or click to browse</div>
+                    <input type="file" name="excel_file" id="excel_file" required accept=".csv, .xls, .xlsx" style="position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer;" onchange="document.getElementById('import-file-name').textContent = this.files[0] ? this.files[0].name : ''">
+                    <div id="import-file-name" style="font-size:.85rem; font-weight:600; color:var(--info);"></div>
+                </div>
+                
+                @if($errors->has('import_errors') || $errors->has('excel_file'))
+                    <div style="margin-top:1rem; padding:.75rem; background:#fee2e2; border:1px solid #ef4444; border-radius:8px; max-height:150px; overflow-y:auto;">
+                        @if($errors->has('excel_file'))
+                            <div style="font-size:.85rem; color:#b91c1c; font-weight:600; margin-bottom:.25rem;">{{ $errors->first('excel_file') }}</div>
+                        @endif
+                        @if($errors->has('import_errors'))
+                            <div style="font-size:.85rem; color:#b91c1c; font-weight:600; margin-bottom:.25rem;">Import Validation Failed:</div>
+                            <ul style="margin:0; padding-left:1.25rem; font-size:.8rem; color:#b91c1c;">
+                                @foreach($errors->get('import_errors') as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                @endif
+            </div>
+            <div style="padding:1rem 1.5rem; border-top:1px solid var(--border-color, #e5e7eb); display:flex; justify-content:flex-end; gap:.5rem;">
+                <button type="button" class="btn btn-ghost" onclick="closeImportModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btn-submit-import">
+                    <span id="import-btn-text">Import Data</span>
+                    <span id="import-btn-loader" style="display:none;">Loading...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openImportModal() {
+        document.getElementById('modal-import-expense').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeImportModal() {
+        document.getElementById('modal-import-expense').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // Close dropdown on outside click
+    window.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.style.display === 'block') {
+                    openDropdown.style.display = 'none';
+                }
+            }
+        }
+    });
+
+    document.getElementById('form-import-expense').addEventListener('submit', function() {
+        document.getElementById('btn-submit-import').disabled = true;
+        document.getElementById('import-btn-text').style.display = 'none';
+        document.getElementById('import-btn-loader').style.display = 'inline';
+    });
+
+    // Auto-open modal if there are errors
+    @if($errors->has('import_errors') || $errors->has('excel_file'))
+        openImportModal();
+    @endif
+</script>
+
 @endcan

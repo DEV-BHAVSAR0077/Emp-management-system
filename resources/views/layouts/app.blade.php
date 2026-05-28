@@ -222,12 +222,19 @@
             flex-wrap: wrap; gap: .5rem; padding: 1rem 1.5rem;
             border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-muted);
         }
-        .pagination-links { display: flex; gap: .25rem; }
+        .pagination-links { 
+            display: flex; gap: .25rem; 
+            overflow-x: auto; padding-bottom: .4rem; 
+            max-width: 100%; scrollbar-width: thin;
+        }
+        .pagination-links::-webkit-scrollbar { height: 6px; }
+        .pagination-links::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .pagination-links a, .pagination-links span {
             display: inline-flex; align-items: center; justify-content: center;
             width: 30px; height: 30px; border-radius: 5px; font-size: .82rem;
             text-decoration: none; color: var(--text-muted);
             border: 1px solid var(--border); transition: all .14s;
+            flex-shrink: 0;
         }
         .pagination-links a:hover { background: var(--bg); color: var(--text); }
         .pagination-links span.active   { background: var(--btn-bg); color: #fff; border-color: var(--btn-bg); }

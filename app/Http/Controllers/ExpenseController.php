@@ -9,6 +9,10 @@ use App\Models\Expense;
 use App\Models\SubCategory;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
+use App\Imports;
+use Maatwebsite\Excel\Concerns;
+use Illuminate\Validation;
+use Maatwebsite\Excel\Facades;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -53,19 +57,34 @@ class ExpenseController extends Controller
         ]);
     }
 
-    // Store a newly created expense.
     public function store(ExpanceRequest $request)
     {
+        $expenseName = trim($request->name);
+        $expenseNote = $request->note ? mb_substr(trim($request->note), 0, 1000) : null;
+
+        $duplicateExists = Expense::where('user_id', Auth::id())
+            ->where('expense_category_id', $request->expense_category_id)
+            ->where('expense_sub_category_id', $request->expense_sub_category_id)
+            ->where('agency_vendor_id', $request->agency_vendor_id ?: null)
+            ->where('name', $expenseName)
+            ->where('amount', $request->amount)
+            ->where('expense_date', $request->expense_date)
+            ->where('note', $expenseNote)
+            ->exists();
+
+        if ($duplicateExists) {
+            return back()->withInput()->with('error', 'An exact duplicate of this expense already exists in the system.');
+        }
 
         $expense = Expense::create([
             'user_id'                  => Auth::id(),
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
             'agency_vendor_id'         => $request->agency_vendor_id ?: null,
-            'name'                     => $request->name,
+            'name'                     => $expenseName,
             'amount'                   => $request->amount,
             'expense_date'             => $request->expense_date,
-            'note'                     => $request->note,
+            'note'                     => $expenseNote,
         ]);
 
         $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
@@ -157,5 +176,58 @@ class ExpenseController extends Controller
         }
 
         return back()->with('success', 'Expense restored successfully.');
+    }
+
+    // ---------------------------------------------------------
+    // Excel Import & Template
+    // ---------------------------------------------------------
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new class implements FromArray, WithHeadings {
+            public function headings(): array {
+                return [
+                    'expense_name',
+                    'amount',
+                    'date',
+                    'category',
+                    'sub_category',
+                    'agency_vendor',
+                    'note'
+                ];
+            }
+            public function array(): array {
+                return [[
+                    'Office Supplies',
+                    '150.50',
+                    date('Y-m-d'),
+                    'Office Expenses',
+                    'Stationery',
+                    'Amazon',
+                    'Bought some pens and paper'
+                ]];
+            }
+        }, 'expense_template.xlsx');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+        ]);
+
+        try {
+            Excel::import(
+                new ExpensesImport,
+                $request->file('excel_file')
+            );
+
+            return back()->with('success', 'Expenses imported successfully!');
+        } catch (ValidationException $e) {
+            // Let Laravel handle the ValidationException and flash it to the session
+            throw $e;
+        } catch (\Exception $e) {
+            return back()->withErrors(['import_errors' => [$e->getMessage()]]);
+        }
     }
 }
