@@ -3,7 +3,7 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Categories
-                <span class="badge" style="margin-left:.5rem; font-size:.72rem;">{{ count($categories) }}</span>
+                <span class="badge" style="margin-left:.5rem; font-size:.72rem;">{{ $categories->total() }}</span>
             </h2>
             <div class="panel-actions">
                 {{-- Add Category --}}
@@ -17,7 +17,7 @@
         </div>
 
         <div class="table-wrap">
-            @if(count($categories) > 0)
+            @if($categories->count() > 0)
             <table>
                 <thead>
                     <tr>
@@ -32,7 +32,7 @@
                     @foreach($categories as $index => $c)
                     <tr id="category-row-{{ $c->id }}">
                         <td style="color:var(--text-muted); width:50px;">
-                            {{ $index + 1 }}
+                            {{ $categories->firstItem() + $index }}
                         </td>
                         <td>
                             <strong>{{ $c->name }}</strong>
@@ -92,6 +92,22 @@
                 </div>
             @endif
         </div>
+
+        @if($categories->hasPages())
+        <div class="pagination-wrap">
+            <div>Showing {{ $categories->firstItem() }}–{{ $categories->lastItem() }} of {{ $categories->total() }} categories</div>
+            <div class="pagination-links">
+                @if($categories->onFirstPage()) <span class="disabled">‹</span>
+                @else <a href="{{ $categories->previousPageUrl() }}" id="btn-category-prev">‹</a> @endif
+                @foreach(range(1, $categories->lastPage()) as $page)
+                    @if($page == $categories->currentPage()) <span class="active">{{ $page }}</span>
+                    @else <a href="{{ $categories->url($page) }}" id="btn-category-page-{{ $page }}">{{ $page }}</a> @endif
+                @endforeach
+                @if($categories->hasMorePages()) <a href="{{ $categories->nextPageUrl() }}" id="btn-category-next">›</a>
+                @else <span class="disabled">›</span> @endif
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endif

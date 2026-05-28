@@ -6,18 +6,18 @@ use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
     // Display the categories list
     public function index()
     {
-        $categories = Category::with('subCategories')
-            ->orderBy('name')
-            ->get();
+        $categories = Category::query()->with('subCategories')
+            ->paginate(9);
 
         return view('categories.index', [
-            'user'       => auth()->user(),
+            'user'       => Auth::user(),
             'categories' => $categories,
         ]);
     }
@@ -76,7 +76,8 @@ class CategoryController extends Controller
             'sub_categories.*.name.distinct' => 'Duplicate sub-category names are not allowed.',
         ]);
 
-        $category->update(['name' => $request->name]);
+        $category->fill(['name' => $request->name]);
+        $category->save();
 
         // Sync sub-categories dynamically
         if ($request->has('sub_categories')) {
@@ -84,9 +85,10 @@ class CategoryController extends Controller
             foreach ($request->sub_categories as $subData) {
                 if (!empty($subData['id'])) {
                     // Update existing
-                    $sub = SubCategory::find($subData['id']);
+                    $sub = SubCategory::query()->find($subData['id']);
                     if ($sub && $sub->category_id === $category->id) {
-                        $sub->update(['name' => $subData['name']]);
+                        $sub->fill(['name' => $subData['name']]);
+                        $sub->save();
                         $submittedIds[] = $sub->id;
                     }
                 } else {
@@ -111,7 +113,7 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         $category->subCategories()->delete();
-        $category->delete();
+        Category::destroy($category->id);
 
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
@@ -119,7 +121,7 @@ class CategoryController extends Controller
     // Soft delete a single sub-category via AJAX
     public function destroySubCategory(SubCategory $subCategory)
     {
-        $subCategory->delete();
+        SubCategory::destroy($subCategory->id);
 
         return response()->json(['success' => true]);
     }

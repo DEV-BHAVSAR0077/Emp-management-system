@@ -73,7 +73,7 @@ class PaymentController extends Controller implements HasMiddleware
      */
     public function create(Request $request)
     {
-        $agencyVendors = AgencyVendor::orderBy('name')->get();
+        $agencyVendors = AgencyVendor::query()->orderBy('name', 'asc')->get();
 
         return view('payments.create', [
             'user'          => Auth::user(),
@@ -89,25 +89,7 @@ class PaymentController extends Controller implements HasMiddleware
         $agencyVendorId = $request->agency_vendor_id;
         $paymentNotes = $request->notes ? mb_substr(trim($request->notes), 0, 1000) : null;
 
-        $duplicateExists = Payment::where('user_id', Auth::id())
-            ->where('agency_vendor_id', $agencyVendorId)
-            ->where('amount', $request->amount)
-            ->where('payment_type', $request->payment_type)
-            ->where('payment_date', $request->payment_date)
-            ->where('notes', $paymentNotes)
-            ->exists();
-
-        if ($duplicateExists) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'message' => 'An exact duplicate of this payment already exists in the system.',
-                    'errors' => ['agency_vendor_id' => ['An exact duplicate of this payment already exists in the system.']]
-                ], 422);
-            }
-            return back()->withInput()->with('error', 'An exact duplicate of this payment already exists in the system.');
-        }
-
-        $payment = Payment::create([
+        $payment = Payment::query()->create([
             'user_id'          => Auth::id(),
             'agency_vendor_id' => $agencyVendorId,
             'amount'           => $request->amount,
@@ -135,7 +117,7 @@ class PaymentController extends Controller implements HasMiddleware
      */
     public function edit(Payment $payment)
     {
-        $agencyVendors = AgencyVendor::orderBy('name')->get();
+        $agencyVendors = AgencyVendor::query()->orderBy('name', 'asc')->get();
 
         return view('payments.edit', [
             'user'          => Auth::user(),
@@ -162,13 +144,14 @@ class PaymentController extends Controller implements HasMiddleware
             VendorLedgerService::addRemoveEntry($payment, $oldVendorId, $oldAmount, 'payment', $oldBalance, 'Payment Deleted (Vendor Changed)', $oldPaymentType);
         }
 
-        $payment->update([
+        $payment->fill([
             'agency_vendor_id' => $newVendorId,
             'amount'           => $newAmount,
             'payment_type'     => $newPaymentType,
             'notes'            => $request->notes,
             'payment_date'     => $request->payment_date,
         ]);
+        $payment->save();
 
         $newBalance = SyncBalance::updateBalance($newVendorId, $newAmount, 'payment', 'add', $newPaymentType);
         if ($newVendorId) {
@@ -203,7 +186,7 @@ class PaymentController extends Controller implements HasMiddleware
         if ($payment->agency_vendor_id) {
             VendorLedgerService::addRemoveEntry($payment, $payment->agency_vendor_id, $payment->amount, 'payment', $newBalance, 'Payment Deleted', $payment->payment_type);
         }
-        $payment->delete();
+        Payment::destroy($payment->id);
 
         return back()->with('success', 'Payment deleted successfully.');
     }

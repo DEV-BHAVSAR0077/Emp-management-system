@@ -88,23 +88,8 @@ class PaymentsImport implements ToCollection, WithHeadingRow
                 $note = isset($row['notes']) ? mb_substr(trim($row['notes']), 0, 1000) : null;
                 if ($note === '') $note = null;
 
-                // Duplicate Check
-                $duplicateExists = Payment::where('user_id', Auth::id())
-                    ->where('agency_vendor_id', $vendorId)
-                    ->where('amount', $amount)
-                    ->where('payment_type', $paymentType)
-                    ->where('payment_date', $paymentDate)
-                    ->where('notes', $note)
-                    ->exists();
-
-                if ($duplicateExists) {
-                    throw ValidationException::withMessages([
-                        'duplicate' => ["Row {$rowNumber} -> An exact duplicate of this payment already exists in the system."]
-                    ]);
-                }
-
                 // Create Payment
-                $payment = Payment::create([
+                $payment = Payment::query()->create([
                     'user_id'          => Auth::id(),
                     'agency_vendor_id' => $vendorId,
                     'amount'           => $amount,

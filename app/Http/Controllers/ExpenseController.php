@@ -9,6 +9,11 @@ use App\Models\Expense;
 use App\Models\SubCategory;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Illuminate\Validation\ValidationException;
+use App\Imports\ExpensesImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,7 +49,7 @@ class ExpenseController extends Controller
     public function create()
     {
         $categories    = Category::with('subCategories')->orderBy('name')->get();
-        $agencyVendors = AgencyVendor::orderBy('name')->get();
+        $agencyVendors = AgencyVendor::query()->orderBy('name', 'asc')->get();
 
         return view('expenses.create_expense', [
             'user'          => Auth::user(),
@@ -58,21 +63,7 @@ class ExpenseController extends Controller
         $expenseName = trim($request->name);
         $expenseNote = $request->note ? mb_substr(trim($request->note), 0, 1000) : null;
 
-        $duplicateExists = Expense::where('user_id', Auth::id())
-            ->where('expense_category_id', $request->expense_category_id)
-            ->where('expense_sub_category_id', $request->expense_sub_category_id)
-            ->where('agency_vendor_id', $request->agency_vendor_id ?: null)
-            ->where('name', $expenseName)
-            ->where('amount', $request->amount)
-            ->where('expense_date', $request->expense_date)
-            ->where('note', $expenseNote)
-            ->exists();
-
-        if ($duplicateExists) {
-            return back()->withInput()->with('error', 'An exact duplicate of this expense already exists in the system.');
-        }
-
-        $expense = Expense::create([
+        $expense = Expense::query()->create([
             'user_id'                  => Auth::id(),
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
@@ -96,8 +87,8 @@ class ExpenseController extends Controller
     public function edit(Expense $expense)
     {
         $authUser      = Auth::user();
-        $categories    = Category::with('subCategories')->orderBy('name')->get();
-        $agencyVendors = AgencyVendor::orderBy('name')->get();
+        $categories    = Category::query()->with('subCategories')->orderBy('name', 'asc')->get();
+        $agencyVendors = AgencyVendor::query()->orderBy('name', 'asc')->get();
 
         return view('expenses.edit_expense', [
             'user'          => $authUser,
@@ -121,7 +112,7 @@ class ExpenseController extends Controller
             VendorLedgerService::addRemoveEntry($expense, $oldVendorId, $oldAmount, 'expense', $oldBalance, 'Expense Deleted (Vendor Changed)');
         }
 
-        $expense->update([
+        $expense->fill([
             'expense_category_id'      => $request->expense_category_id,
             'expense_sub_category_id'  => $request->expense_sub_category_id,
             'agency_vendor_id'         => $newVendorId,
@@ -130,6 +121,7 @@ class ExpenseController extends Controller
             'expense_date'             => $request->expense_date,
             'note'                     => $request->note,
         ]);
+        $expense->save();
 
         $newBalance = SyncBalance::updateBalance($newVendorId, $newAmount, 'expense', 'add');
         if ($newVendorId) {
@@ -157,7 +149,7 @@ class ExpenseController extends Controller
         if ($expense->agency_vendor_id) {
             VendorLedgerService::addRemoveEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Deleted');
         }
-        $expense->delete();
+        Expense::destroy($expense->id);
 
         return back()->with('success', 'Expense deleted successfully.');
     }
@@ -180,7 +172,7 @@ class ExpenseController extends Controller
 
     public function downloadTemplate()
     {
-        return \Maatwebsite\Excel\Facades\Excel::download(new class implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+        return Excel::download(new class implements FromArray, WithHeadings {
             public function headings(): array {
                 return [
                     'expense_name',
@@ -206,20 +198,20 @@ class ExpenseController extends Controller
         }, 'expense_template.xlsx');
     }
 
-    public function importExcel(\Illuminate\Http\Request $request)
+    public function importExcel(Request $request)
     {
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
         ]);
 
         try {
-            \Maatwebsite\Excel\Facades\Excel::import(
-                new \App\Imports\ExpensesImport,
+            Excel::import(
+                new ExpensesImport,
                 $request->file('excel_file')
             );
 
             return back()->with('success', 'Expenses imported successfully!');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             $messages = [];
             foreach ($e->errors() as $field => $fieldErrors) {
                 foreach ($fieldErrors as $error) {

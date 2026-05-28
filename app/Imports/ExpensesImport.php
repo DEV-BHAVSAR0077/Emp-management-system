@@ -113,25 +113,8 @@ class ExpensesImport implements ToCollection, WithHeadingRow
                 $expenseAmount = $row['amount'];
                 $expenseNote = mb_substr($note, 0, 1000);
 
-                // Check for exact duplicate
-                $duplicateExists = Expense::where('user_id', Auth::id())
-                    ->where('expense_category_id', $categoryId)
-                    ->where('expense_sub_category_id', $subCategoryId)
-                    ->where('agency_vendor_id', $vendorId)
-                    ->where('name', $expenseName)
-                    ->where('amount', $expenseAmount)
-                    ->where('expense_date', $expenseDate)
-                    ->where('note', $expenseNote)
-                    ->exists();
-
-                if ($duplicateExists) {
-                    throw ValidationException::withMessages([
-                        'import_errors' => ["Row {$rowNumber} -> duplicate -> An exact duplicate of this expense already exists in the system."]
-                    ]);
-                }
-
                 // Create Expense
-                $expense = Expense::create([
+                $expense = Expense::query()->create([
                     'user_id'                 => Auth::id(),
                     'expense_category_id'     => $categoryId,
                     'expense_sub_category_id' => $subCategoryId,
