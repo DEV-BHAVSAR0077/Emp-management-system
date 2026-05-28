@@ -8,6 +8,10 @@ use App\Models\Expense;
 use App\Models\Payment;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
+use Maatwebsite\Excel\Facades;
+use Maatwebsite\Excel\Concerns;
+use App\Imports;
+use Illuminate\Validation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -87,13 +91,32 @@ class PaymentController extends Controller implements HasMiddleware
     public function store(PaymentRequest $request)
     {
         $agencyVendorId = $request->agency_vendor_id;
+        $paymentNotes = $request->notes ? mb_substr(trim($request->notes), 0, 1000) : null;
+
+        $duplicateExists = Payment::where('user_id', Auth::id())
+            ->where('agency_vendor_id', $agencyVendorId)
+            ->where('amount', $request->amount)
+            ->where('payment_type', $request->payment_type)
+            ->where('payment_date', $request->payment_date)
+            ->where('notes', $paymentNotes)
+            ->exists();
+
+        if ($duplicateExists) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => 'An exact duplicate of this payment already exists in the system.',
+                    'errors' => ['agency_vendor_id' => ['An exact duplicate of this payment already exists in the system.']]
+                ], 422);
+            }
+            return back()->withInput()->with('error', 'An exact duplicate of this payment already exists in the system.');
+        }
 
         $payment = Payment::create([
             'user_id'          => Auth::id(),
             'agency_vendor_id' => $agencyVendorId,
             'amount'           => $request->amount,
             'payment_type'     => $request->payment_type,
-            'notes'            => $request->notes,
+            'notes'            => $paymentNotes,
             'payment_date'     => $request->payment_date,
         ]);
 
@@ -187,5 +210,54 @@ class PaymentController extends Controller implements HasMiddleware
         $payment->delete();
 
         return back()->with('success', 'Payment deleted successfully.');
+    }
+
+    // ---------------------------------------------------------
+    // Excel Import & Template
+    // ---------------------------------------------------------
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new class implements FromArray, WithHeadings {
+            public function headings(): array {
+                return [
+                    'agency_vendor',
+                    'amount',
+                    'payment_type',
+                    'payment_date',
+                    'notes'
+                ];
+            }
+            public function array(): array {
+                return [[
+                    'Amazon',
+                    '500.00',
+                    'Credit',
+                    date('Y-m-d'),
+                    'Advance payment for bulk order'
+                ]];
+            }
+        }, 'payment_template.xlsx');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'payment_excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ], [
+            'payment_excel_file.required' => 'Please select an Excel file to upload.',
+            'payment_excel_file.mimes'    => 'The file must be a valid Excel (.xlsx, .xls) or CSV file.',
+            'payment_excel_file.max'      => 'The file size must not exceed 10MB.'
+        ]);
+
+        try {
+            Excel::import(new PaymentsImport, $request->file('payment_excel_file'));
+            return redirect()->route('payments.index')->with('success', 'Payments imported successfully!');
+        } catch (ValidationException $e) {
+            $errorMsgs = collect($e->errors())->flatten()->toArray();
+            return redirect()->route('payments.index')->withErrors(['payment_import_errors' => $errorMsgs]);
+        } catch (\Exception $e) {
+            return redirect()->route('payments.index')->withErrors(['payment_import_errors' => [$e->getMessage()]]);
+        }
     }
 }

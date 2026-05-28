@@ -13,7 +13,8 @@
         "barryvdh/laravel-dompdf": "*",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
-        "laravel/ui": "*"
+        "laravel/ui": "*",
+        "maatwebsite/excel": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
