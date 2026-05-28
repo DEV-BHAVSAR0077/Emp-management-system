@@ -9,10 +9,6 @@ use App\Models\Expense;
 use App\Models\SubCategory;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
-use App\Imports;
-use Maatwebsite\Excel\Concerns;
-use Illuminate\Validation;
-use Maatwebsite\Excel\Facades;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -184,7 +180,7 @@ class ExpenseController extends Controller
 
     public function downloadTemplate()
     {
-        return Excel::download(new class implements FromArray, WithHeadings {
+        return \Maatwebsite\Excel\Facades\Excel::download(new class implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
             public function headings(): array {
                 return [
                     'expense_name',
@@ -210,22 +206,27 @@ class ExpenseController extends Controller
         }, 'expense_template.xlsx');
     }
 
-    public function importExcel(Request $request)
+    public function importExcel(\Illuminate\Http\Request $request)
     {
         $request->validate([
             'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
         ]);
 
         try {
-            Excel::import(
-                new ExpensesImport,
+            \Maatwebsite\Excel\Facades\Excel::import(
+                new \App\Imports\ExpensesImport,
                 $request->file('excel_file')
             );
 
             return back()->with('success', 'Expenses imported successfully!');
-        } catch (ValidationException $e) {
-            // Let Laravel handle the ValidationException and flash it to the session
-            throw $e;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $messages = [];
+            foreach ($e->errors() as $field => $fieldErrors) {
+                foreach ($fieldErrors as $error) {
+                    $messages[] = $error;
+                }
+            }
+            return back()->withErrors(['import_errors' => $messages]);
         } catch (\Exception $e) {
             return back()->withErrors(['import_errors' => [$e->getMessage()]]);
         }

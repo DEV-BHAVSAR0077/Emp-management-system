@@ -6,7 +6,6 @@ use App\Models\AgencyVendor;
 use App\Models\Payment;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
-use PhpOffice\PhpSpreadsheet\Shared;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +73,7 @@ class PaymentsImport implements ToCollection, WithHeadingRow
                 $dateStr = $row['payment_date'];
                 $paymentDate = null;
                 if (is_numeric($dateStr)) {
-                    $paymentDate = Date::excelToDateTimeObject($dateStr)->format('Y-m-d');
+                    $paymentDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateStr)->format('Y-m-d');
                 } else {
                     $parsed = strtotime($dateStr);
                     if (!$parsed) {
