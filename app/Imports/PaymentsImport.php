@@ -25,6 +25,7 @@ class PaymentsImport implements ToCollection, WithHeadingRow
         DB::beginTransaction();
 
         try {
+            $validatedPayments = [];
             foreach ($rows as $index => $row) {
                 // Skip empty rows
                 if (!isset($row['amount']) && !isset($row['payment_type']) && !isset($row['agency_vendor'])) {
@@ -89,19 +90,28 @@ class PaymentsImport implements ToCollection, WithHeadingRow
                 $note = isset($row['notes']) ? mb_substr(trim($row['notes']), 0, 1000) : null;
                 if ($note === '') $note = null;
 
-                // Create Payment
-                $payment = Payment::query()->create([
+                $validatedPayments[] = [
                     'user_id'          => Auth::id(),
                     'agency_vendor_id' => $vendorId,
                     'amount'           => $amount,
                     'payment_type'     => $paymentType,
                     'payment_date'     => $paymentDate,
                     'notes'            => $note,
-                ]);
+                ];
+            }
 
-                // Update ledger
-                $newBalance = SyncBalance::updateBalance($vendorId, $amount, 'payment', 'add', $paymentType);
-                VendorLedgerService::addEntry($payment, $vendorId, $amount, 'payment', $newBalance, 'Payment Added (Import)', $paymentType);
+            // Insert in chunks of 10 after all validations are successfully done
+            $chunks = array_chunk($validatedPayments, 10);
+            foreach ($chunks as $chunk) {
+                foreach ($chunk as $data) {
+                    $payment = Payment::query()->create($data);
+
+                    // Update ledger
+                    $newBalance = SyncBalance::updateBalance($payment->agency_vendor_id, $payment->amount, 'payment', 'add', $payment->payment_type);
+                    if ($payment->agency_vendor_id) {
+                        VendorLedgerService::addEntry($payment, $payment->agency_vendor_id, $payment->amount, 'payment', $newBalance, 'Payment Added (Import)', $payment->payment_type);
+                    }
+                }
             }
 
             DB::commit();

@@ -39,6 +39,7 @@ class ExpensesImport implements ToCollection, WithHeadingRow
         DB::beginTransaction();
 
         try {
+            $validatedExpenses = [];
             foreach ($rows as $index => $row) {
                 // Laravel Excel rows are 0-indexed and heading row is not included in the collection, so +2 gives the excel row number
                 $rowNumber = $index + 2;
@@ -113,8 +114,7 @@ class ExpensesImport implements ToCollection, WithHeadingRow
                 $expenseAmount = $row['amount'];
                 $expenseNote = mb_substr($note, 0, 1000);
 
-                // Create Expense
-                $expense = Expense::query()->create([
+                $validatedExpenses[] = [
                     'user_id'                 => Auth::id(),
                     'expense_category_id'     => $categoryId,
                     'expense_sub_category_id' => $subCategoryId,
@@ -123,12 +123,20 @@ class ExpensesImport implements ToCollection, WithHeadingRow
                     'amount'                  => $expenseAmount,
                     'expense_date'            => $expenseDate,
                     'note'                    => $expenseNote,
-                ]);
+                ];
+            }
 
-                // Update Ledger
-                $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
-                if ($expense->agency_vendor_id) {
-                    VendorLedgerService::addEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Added (Excel Import)');
+            // Insert in chunks of 10 after all validations are successfully done
+            $chunks = array_chunk($validatedExpenses, 10);
+            foreach ($chunks as $chunk) {
+                foreach ($chunk as $data) {
+                    $expense = Expense::query()->create($data);
+
+                    // Update Ledger
+                    $newBalance = SyncBalance::updateBalance($expense->agency_vendor_id, $expense->amount, 'expense', 'add');
+                    if ($expense->agency_vendor_id) {
+                        VendorLedgerService::addEntry($expense, $expense->agency_vendor_id, $expense->amount, 'expense', $newBalance, 'Expense Added (Excel Import)');
+                    }
                 }
             }
 
