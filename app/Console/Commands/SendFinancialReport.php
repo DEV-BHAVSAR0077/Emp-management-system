@@ -70,7 +70,8 @@ class SendFinancialReport extends Command
         }
 
         // Get users with the selected roles
-        $users = User::query()->select(['email'])->whereIn('role', $roles)->get();
+        $roleIds = \App\Models\Role::whereIn('name', $roles)->pluck('id');
+        $users = User::query()->select(['email'])->whereIn('role_id', $roleIds)->get();
         if ($users->isEmpty()) {
             $this->info('No users found with the selected roles. Exiting.');
             return self::SUCCESS;

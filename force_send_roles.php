@@ -7,6 +7,7 @@ $kernel->bootstrap();
 
 use App\Models\User;
 use App\Models\Setting;
+use App\Models\Role;
 use App\Jobs\SendUserFinancialReportJob;
 
 $settingRoles = Setting::where('key', 'weekly_report_roles')->first();
@@ -17,7 +18,8 @@ if (empty($roles)) {
     exit;
 }
 
-$users = User::whereIn('role', $roles)->get();
+$roleIds = Role::whereIn('name', $roles)->pluck('id');
+$users = User::whereIn('role_id', $roleIds)->get();
 
 if ($users->isEmpty()) {
     echo "No users found with the selected roles.\n";
