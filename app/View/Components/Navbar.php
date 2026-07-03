@@ -30,7 +30,7 @@ class Navbar extends Component
         $this->user = Auth::user();
 
         // Get user role color
-        $myRoleObj = Role::where('name', $this->user->role)->first();
+        $myRoleObj = $this->user->roleInfo;
         $this->myRoleColor = $myRoleObj?->color ?? '#374151';
 
         // Determine active tab based on route and request parameters

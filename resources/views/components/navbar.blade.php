@@ -58,7 +58,7 @@
                 @endif
                 {{ $user->email }}
                 <span class="role-pill" style="background:{{ $myRoleColor }}20; color:{{ $myRoleColor }}; border:1px solid {{ $myRoleColor }}40;">
-                    {{ $user->role }}
+                    {{ $user->roleInfo->name ?? 'N/A' }}
                 </span>
             </span>
         </a>

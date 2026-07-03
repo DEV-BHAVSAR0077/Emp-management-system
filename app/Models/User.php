@@ -17,7 +17,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'role_id',
         'profile_photo',
         'report_frequency',
         'next_send_at',
@@ -46,7 +46,7 @@ class User extends Authenticatable
     // Role relationship ─────────────────────────────────────────────────
     public function roleInfo(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'role', 'name');
+        return $this->belongsTo(Role::class, 'role_id', 'id');
     }
 
     // Profile Photo helper ──────────────────────────────────────────────
