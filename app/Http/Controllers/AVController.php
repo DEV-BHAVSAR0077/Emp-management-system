@@ -22,26 +22,6 @@ class AVController extends Controller implements HasMiddleware
         ];
     }
 
-    // public function index(Request $request)
-    // {
-    //     $avSearch = $request->input('av_search', '');
-        
-    //     $agencyVendors = AgencyVendor::query()
-    //         ->withSum('expenses', 'amount')
-    //         ->withSum('payments', 'amount')
-    //         ->when($avSearch, function ($query, $search) {
-    //             $query->where('name', 'like', "%{$search}%")
-    //                   ->orWhere('email', 'like', "%{$search}%")
-    //                   ->orWhere('contact_person', 'like', "%{$search}%");
-    //         })
-    //         ->orderBy('name')
-    //         ->paginate(10, ['*'], 'av_page');
-
-    //     return view('agency_vendors.index', [
-    //         'agencyVendors' => $agencyVendors,
-    //         'avSearch'      => $avSearch,
-    //     ]);
-    // }
 
     public function index(Request $request)
     {
@@ -110,13 +90,6 @@ class AVController extends Controller implements HasMiddleware
         return back()->with('success', 'Agency/Vendor deleted successfully.');
     }
 
-    /*
-    public function getPayments(Request $request, AgencyVendor $agencyVendor)
-    {
-        // OLD CODE COMMENTED OUT
-        ...
-    }
-    */
 
     private function getLedgerQuery(Request $request, AgencyVendor $agencyVendor)
     {

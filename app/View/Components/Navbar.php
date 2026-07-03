@@ -20,6 +20,8 @@ class Navbar extends Component
     public $agencyVendorsTabActive;
     public $paymentsTabActive;
 
+    public $settingsTabActive;
+
     /**
      * Create a new component instance.
      */
@@ -40,6 +42,7 @@ class Navbar extends Component
         $this->categoriesTabActive    = str_starts_with($route, 'categories.');
         $this->agencyVendorsTabActive = str_starts_with($route, 'agency_vendors.');
         $this->paymentsTabActive      = str_starts_with($route, 'payments.');
+        $this->settingsTabActive      = str_starts_with($route, 'settings.');
         $this->dashTabActive          = $route === 'dashboard';
     }
 

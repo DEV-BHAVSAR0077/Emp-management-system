@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PaymentRequest;
 use App\Models\AgencyVendor;
-use App\Models\Expense;
+
 use App\Models\Payment;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
@@ -50,7 +50,7 @@ class PaymentController extends Controller implements HasMiddleware
                 $query->whereDate('payment_date', '<=', $end);
             })
             ->orderBy('id', 'desc')
-            ->paginate(8, ['*'], 'payment_page');
+            ->paginate(7, ['*'], 'payment_page');
 
         $agencyVendors = AgencyVendor::select('agency_vendors.*')
             ->withSum('expenses', 'amount')
@@ -68,18 +68,6 @@ class PaymentController extends Controller implements HasMiddleware
         ]);
     }
 
-    /**
-     * Show the form for creating a new payment.
-     */
-    public function create(Request $request)
-    {
-        $agencyVendors = AgencyVendor::query()->orderBy('name', 'asc')->get();
-
-        return view('payments.create', [
-            'user'          => Auth::user(),
-            'agencyVendors' => $agencyVendors,
-        ]);
-    }
 
     /**
      * Store a newly created payment.
@@ -112,19 +100,6 @@ class PaymentController extends Controller implements HasMiddleware
                          ->with('success', 'Payment recorded successfully.');
     }
 
-    /**
-     * Show the form for editing the specified payment.
-     */
-    public function edit(Payment $payment)
-    {
-        $agencyVendors = AgencyVendor::query()->orderBy('name', 'asc')->get();
-
-        return view('payments.edit', [
-            'user'          => Auth::user(),
-            'payment'       => $payment,
-            'agencyVendors' => $agencyVendors,
-        ]);
-    }
 
     /**
      * Update the specified payment.

@@ -36,14 +36,6 @@ class AgencyVendor extends Model
         ];
     }
 
-    // Dynamically computed total from related expenses (use withSum in queries)
-    public function getTotalExpensesAttribute(): string
-    {
-        return number_format(
-            $this->expenses()->sum('amount'),
-            2
-        );
-    }
 
     // Expenses associated with this agency/vendor
     public function expenses(): HasMany

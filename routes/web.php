@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AVController;
 use App\Http\Controllers\dashboard;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -176,7 +177,13 @@ Route::middleware('auth')->group(function () {
          ->name('payments.import')->middleware('permission:create-payment');
 
     Route::resource('payments', PaymentController::class)
-         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy'])
+         ->only(['index', 'store', 'update', 'destroy'])
          ->names('payments');
+
+    // ── Settings Module ───────────────────────────────────────────────────
+    Route::get('/settings', [SettingController::class, 'index'])
+         ->name('settings.index');
+    Route::post('/settings', [SettingController::class, 'store'])
+         ->name('settings.store');
 
 });
