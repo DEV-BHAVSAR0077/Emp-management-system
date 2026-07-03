@@ -56,6 +56,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/line-chart-data', [dashboard::class, 'getLineChartData'])
          ->name('dashboard.line_chart_data');
 
+    // Profile
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])
+         ->name('profile.edit');
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])
+         ->name('profile.update');
+
     // Users List
     Route::get('/users', [UserController::class, 'index'])
          ->name('users.index')->middleware('permission:view-user');

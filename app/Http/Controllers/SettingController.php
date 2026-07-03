@@ -41,6 +41,12 @@ class SettingController extends Controller
             ['value' => $weeklyReportEnabled]
         );
 
+        $frequency = $request->input('financial_report_frequency', 'weekly');
+        Setting::updateOrCreate(
+            ['key' => 'financial_report_frequency'],
+            ['value' => $frequency]
+        );
+
         return redirect()->route('settings.index')->with('success', 'Settings updated successfully.');
     }
 }

@@ -13,12 +13,15 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     //The attributes that are mass assignable.
-     
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'profile_photo',
+        'report_frequency',
+        'next_send_at',
+        'last_sent_at',
     ];
 
     // The attributes that should be hidden for serialization.
@@ -35,6 +38,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'next_send_at'      => 'datetime',
+            'last_sent_at'      => 'datetime',
         ];
     }
 
@@ -42,6 +47,14 @@ class User extends Authenticatable
     public function roleInfo(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role', 'name');
+    }
+
+    // Profile Photo helper ──────────────────────────────────────────────
+    public function getProfilePhotoUrlAttribute()
+    {
+        return $this->profile_photo 
+            ? asset('storage/' . $this->profile_photo) 
+            : null;
     }
 
     // Permission helpers ────────────────────────────────────────────────

@@ -51,12 +51,17 @@
     </div>
 
     <div class="nav-right">
-        <span class="nav-user">
-            {{ $user->email }}
-            <span class="role-pill" style="background:{{ $myRoleColor }}20; color:{{ $myRoleColor }}; border:1px solid {{ $myRoleColor }}40;">
-                {{ $user->role }}
+        <a href="{{ route('profile.edit') }}" style="text-decoration: none;">
+            <span class="nav-user">
+                @if(Auth::user()->profile_photo_url)
+                    <img src="{{ Auth::user()->profile_photo_url }}" alt="Profile Photo" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+                @endif
+                {{ $user->email }}
+                <span class="role-pill" style="background:{{ $myRoleColor }}20; color:{{ $myRoleColor }}; border:1px solid {{ $myRoleColor }}40;">
+                    {{ $user->role }}
+                </span>
             </span>
-        </span>
+        </a>
         <form method="POST" action="{{ route('logout') }}" style="display:inline;">
             @csrf
             <button type="submit" id="btn-logout" class="btn-logout">Sign Out</button>

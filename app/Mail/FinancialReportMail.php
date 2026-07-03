@@ -8,19 +8,22 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Attachment;
 
-class WeeklyFinancialReport extends Mailable
+class FinancialReportMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $reportData;
+    public $pdfContent;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($reportData)
+    public function __construct($reportData, $pdfContent)
     {
         $this->reportData = $reportData;
+        $this->pdfContent = $pdfContent;
     }
 
     /**
@@ -28,8 +31,9 @@ class WeeklyFinancialReport extends Mailable
      */
     public function envelope(): Envelope
     {
+        $frequency = ucfirst($this->reportData['frequency'] ?? 'Weekly');
         return new Envelope(
-            subject: 'Weekly Financial Report',
+            subject: "{$frequency} Financial Report",
         );
     }
 
@@ -39,7 +43,7 @@ class WeeklyFinancialReport extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.weekly_report',
+            view: 'emails.financial_report',
         );
     }
 
@@ -50,6 +54,12 @@ class WeeklyFinancialReport extends Mailable
      */
     public function attachments(): array
     {
-        return [];
+        $frequency = strtolower($this->reportData['frequency'] ?? 'weekly');
+        $filename = "{$frequency}_financial_report_" . date('Y_m_d') . ".pdf";
+        
+        return [
+            Attachment::fromData(fn () => $this->pdfContent, $filename)
+                ->withMime('application/pdf'),
+        ];
     }
 }
