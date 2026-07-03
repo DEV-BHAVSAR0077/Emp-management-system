@@ -18,7 +18,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'role_id',
     ];
 
     // The attributes that should be hidden for serialization.
@@ -41,7 +41,7 @@ class User extends Authenticatable
     // Role relationship ─────────────────────────────────────────────────
     public function roleInfo(): BelongsTo
     {
-        return $this->belongsTo(Role::class, 'role', 'name');
+        return $this->belongsTo(Role::class, 'role_id', 'id');
     }
 
     // Permission helpers ────────────────────────────────────────────────

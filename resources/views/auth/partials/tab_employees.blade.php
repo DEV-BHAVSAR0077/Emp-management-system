@@ -77,11 +77,11 @@
                         <td>{{ $u->email }}</td>
                         <td>
                             @php
-                                $roleObj   = $rolesMap->get($u->role);
+                                $roleObj   = $u->roleInfo;
                                 $roleColor = $roleObj?->color ?? '#374151';
                             @endphp
                             <span class="badge" style="background:{{ $roleColor }}18; color:{{ $roleColor }}; border:1px solid {{ $roleColor }}35; font-size:12px;">
-                                {{ $u->role }}
+                                {{ $roleObj?->name ?? 'N/A' }}
                             </span>
                         </td>
                         <td style="color:var(--text-muted);">{{ $u->created_at->format('d M Y') }}</td>

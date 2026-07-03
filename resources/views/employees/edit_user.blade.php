@@ -43,16 +43,16 @@
 
                 @can('edit-role')
                 <div class="form-group">
-                    <label for="role">Role</label>
-                    <select id="role" name="role">
+                    <label for="role_id">Role</label>
+                    <select id="role_id" name="role_id">
                         @foreach($roles as $r)
-                            <option value="{{ $r->name }}"
-                                {{ old('role', $editUser->role) === $r->name ? 'selected' : '' }}>
+                            <option value="{{ $r->id }}"
+                                {{ old('role_id', $editUser->role_id) == $r->id ? 'selected' : '' }}>
                                 {{ $r->name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('role')<span class="field-error">{{ $message }}</span>@enderror
+                    @error('role_id')<span class="field-error">{{ $message }}</span>@enderror
                     <span class="field-hint">Changing role grants or revokes management permissions.</span>
                 </div>
                 @endcan
