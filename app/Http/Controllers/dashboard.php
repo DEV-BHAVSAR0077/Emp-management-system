@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Expense;
 use App\Models\AgencyVendor;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -31,8 +32,8 @@ class dashboard extends Controller
 
     public function getChartData(Request $request)
     {
-        $month = $request->input('month', \Carbon\Carbon::now()->month);
-        $year = $request->input('year', \Carbon\Carbon::now()->year);
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
 
         $expenses = Expense::whereYear('expense_date', $year)
             ->whereMonth('expense_date', $month)
@@ -60,10 +61,10 @@ class dashboard extends Controller
 
     public function getStackedChartData(Request $request)
     {
-        $month = $request->input('month', \Carbon\Carbon::now()->month);
-        $year = $request->input('year', \Carbon\Carbon::now()->year);
+        $month = $request->input('month', Carbon::now()->month);
+        $year = $request->input('year', Carbon::now()->year);
 
-        $expenses = \Illuminate\Support\Facades\DB::table('expenses')
+        $expenses = DB::table('expenses')
             ->leftJoin('categories', 'expenses.expense_category_id', '=', 'categories.id')
             ->leftJoin('sub_categories', 'expenses.expense_sub_category_id', '=', 'sub_categories.id')
             ->whereYear('expenses.expense_date', $year)
@@ -103,14 +104,14 @@ class dashboard extends Controller
 
     public function getLineChartData(Request $request)
     {
-        $year = $request->input('year', \Carbon\Carbon::now()->year);
+        $year = $request->input('year', Carbon::now()->year);
 
-        $expenses = \Illuminate\Support\Facades\DB::table('expenses')
+        $expenses = DB::table('expenses')
             ->whereYear('expense_date', $year)
             ->whereNull('deleted_at')
             ->select(
-                \Illuminate\Support\Facades\DB::raw('MONTH(expense_date) as month'),
-                \Illuminate\Support\Facades\DB::raw('SUM(amount) as total')
+                DB::raw('MONTH(expense_date) as month'),
+                DB::raw('SUM(amount) as total')
             )
             ->groupBy('month')
             ->orderBy('month')

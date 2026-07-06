@@ -50,14 +50,14 @@ class SendUserFinancialReportJob implements ShouldQueue
 
         // Determine date range based on frequency
         if ($frequency === 'daily') {
-            $startDate = $now->copy()->subDay()->startOfDay();
-            $endDate = $now->copy()->subDay()->endOfDay();
+            $startDate = $now->copy()->startOfDay();
+            $endDate = $now->copy()->endOfDay();
         } elseif ($frequency === 'weekly') {
-            $startDate = $now->copy()->subWeek()->startOfDay();
-            $endDate = $now->copy()->subDay()->endOfDay();
+            $startDate = $now->copy()->startOfWeek();
+            $endDate = $now->copy()->endOfWeek();
         } else { // monthly
-            $startDate = $now->copy()->subMonth()->startOfDay();
-            $endDate = $now->copy()->subDay()->endOfDay();
+            $startDate = $now->copy()->startOfMonth();
+            $endDate = $now->copy()->endOfMonth();
         }
 
         $startStr = $startDate->toDateString();
@@ -145,10 +145,19 @@ class SendUserFinancialReportJob implements ShouldQueue
         // Update timestamps according to selected frequency
         $this->user->last_sent_at = Carbon::now();
         $this->user->next_send_at = match ($frequency) {
-            'daily'   => Carbon::now()->addDay()->setHour(8)->setMinute(0),
-            'weekly'  => Carbon::now()->addWeek()->setHour(8)->setMinute(0),
-            'monthly' => Carbon::now()->addMonth()->setHour(8)->setMinute(0),
+            'daily'   => Carbon::now()->endOfDay()->subMinutes(5), // 23:55 today or tomorrow if already past
+            'weekly'  => Carbon::now()->endOfWeek()->subMinutes(5), // 23:55 end of week
+            'monthly' => Carbon::now()->endOfMonth()->subMinutes(5), // 23:55 end of month
         };
+        
+        // If the calculated next_send_at is in the past (e.g. we manually triggered it late), advance to the next period
+        if ($this->user->next_send_at <= Carbon::now()) {
+            $this->user->next_send_at = match ($frequency) {
+                'daily'   => Carbon::now()->addDay()->endOfDay()->subMinutes(5),
+                'weekly'  => Carbon::now()->addWeek()->endOfWeek()->subMinutes(5),
+                'monthly' => Carbon::now()->addMonth()->endOfMonth()->subMinutes(5),
+            };
+        }
         $this->user->save();
     }
     

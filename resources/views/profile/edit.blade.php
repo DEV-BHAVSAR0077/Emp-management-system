@@ -48,18 +48,6 @@
                     @error('email')<span class="field-error">{{ $message }}</span>@enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="report_frequency">Financial Report Frequency</label>
-                    <select id="report_frequency" name="report_frequency" class="{{ $errors->has('report_frequency') ? 'input-error' : '' }}">
-                        <option value="" {{ old('report_frequency', $user->report_frequency) === null ? 'selected' : '' }}>None (Do not send reports)</option>
-                        <option value="daily" {{ old('report_frequency', $user->report_frequency) === 'daily' ? 'selected' : '' }}>Daily</option>
-                        <option value="weekly" {{ old('report_frequency', $user->report_frequency) === 'weekly' ? 'selected' : '' }}>Weekly</option>
-                        <option value="monthly" {{ old('report_frequency', $user->report_frequency) === 'monthly' ? 'selected' : '' }}>Monthly</option>
-                    </select>
-                    <span class="field-hint">Receive an automated email with your financial summary.</span>
-                    @error('report_frequency')<span class="field-error">{{ $message }}</span>@enderror
-                </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="password">New Password</label>

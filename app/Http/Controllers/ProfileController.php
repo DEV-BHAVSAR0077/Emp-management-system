@@ -50,9 +50,9 @@ class ProfileController extends Controller
                 if ($request->report_frequency) {
                     $now = Carbon::now();
                     $data['next_send_at'] = match ($request->report_frequency) {
-                        'daily'   => $now->copy()->addDay()->setHour(8)->setMinute(0),
-                        'weekly'  => $now->copy()->addWeek()->setHour(8)->setMinute(0),
-                        'monthly' => $now->copy()->addMonth()->setHour(8)->setMinute(0),
+                        'daily'   => $now->copy()->endOfDay()->subMinutes(5),
+                        'weekly'  => $now->copy()->endOfWeek()->subMinutes(5),
+                        'monthly' => $now->copy()->endOfMonth()->subMinutes(5),
                     };
                 } else {
                     $data['next_send_at'] = null; // User disabled reports

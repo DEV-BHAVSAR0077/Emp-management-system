@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Financial Report</title>
@@ -11,7 +12,7 @@
             margin: 0;
             padding: 0;
         }
-        
+
         /* Header Section */
         .header {
             width: 100%;
@@ -19,15 +20,18 @@
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
+
         .header-logo {
             float: left;
             width: 150px;
         }
+
         .header-logo img {
             max-width: 150px;
             max-height: 60px;
             object-fit: contain;
         }
+
         .header-info {
             float: right;
             text-align: right;
@@ -35,18 +39,20 @@
             font-size: 12px;
             line-height: 1.5;
         }
+
         .company-name {
             font-size: 18px;
             font-weight: bold;
             color: #004b87;
             margin-bottom: 5px;
         }
-        
+
         /* Report Title & Info */
         .report-title-section {
             text-align: center;
             margin-bottom: 30px;
         }
+
         .report-title {
             font-size: 24px;
             font-weight: bold;
@@ -55,23 +61,27 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+
         .report-period {
             font-size: 14px;
             color: #666666;
             font-weight: 500;
         }
-        
+
         /* Tables */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
         }
-        th, td {
+
+        th,
+        td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
+
         thead th {
             background-color: #004b87;
             color: #ffffff;
@@ -81,37 +91,43 @@
             letter-spacing: 0.5px;
             border-bottom: 2px solid #003366;
         }
+
         tbody tr:nth-child(even) {
             background-color: #f8f9fa;
         }
+
         tbody tr:hover {
             background-color: #f1f5f9;
         }
-        
+
         /* Typography Utilities */
         .text-right {
             text-align: right;
         }
+
         .text-center {
             text-align: center;
         }
+
         .font-bold {
             font-weight: bold;
         }
-        
+
         /* Colors for amounts */
         .amount {
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
             font-size: 15px;
         }
+
         .text-danger {
             color: #dc3545;
         }
+
         .text-success {
             color: #28a745;
         }
-        
+
         /* Badges */
         .badge {
             display: inline-block;
@@ -121,15 +137,17 @@
             font-weight: bold;
             text-transform: uppercase;
         }
+
         .badge-expense {
             background-color: #f8d7da;
             color: #721c24;
         }
+
         .badge-payment {
             background-color: #d4edda;
             color: #155724;
         }
-        
+
         /* Summary Section */
         .summary-container {
             width: 40%;
@@ -139,6 +157,7 @@
             border-radius: 6px;
             padding: 15px;
         }
+
         .summary-title {
             font-size: 16px;
             font-weight: bold;
@@ -147,24 +166,31 @@
             border-bottom: 1px solid #dee2e6;
             padding-bottom: 10px;
         }
+
         .summary-table {
             margin-bottom: 0;
         }
-        .summary-table th, .summary-table td {
+
+        .summary-table th,
+        .summary-table td {
             padding: 8px 5px;
             border-bottom: 1px dashed #cccccc;
         }
-        .summary-table tr:last-child th, .summary-table tr:last-child td {
+
+        .summary-table tr:last-child th,
+        .summary-table tr:last-child td {
             border-bottom: none;
         }
+
         .summary-total {
             font-size: 16px;
             font-weight: bold;
         }
+
         .summary-total th {
             color: #004b87;
         }
-        
+
         /* Footer */
         .footer {
             position: fixed;
@@ -178,17 +204,18 @@
             border-top: 1px solid #e0e0e0;
             padding-top: 10px;
         }
-        
+
         .clear {
             clear: both;
         }
-        
+
         /* Page Numbers (DomPDF specific) */
         .page-number:before {
             content: "Page " counter(page);
         }
     </style>
 </head>
+
 <body>
 
     <!-- Footer -->
@@ -200,18 +227,18 @@
     <div class="header">
         <div class="header-logo">
             <?php
-                $logoPath = public_path('images/logo.jpg');
-                if (file_exists($logoPath)) {
-                    $logoData = base64_encode(file_get_contents($logoPath));
-                    echo '<img src="data:image/jpeg;base64,' . $logoData . '" alt="Company Logo">';
-                }
+$logoPath = public_path('images/logo.jpg');
+if (file_exists($logoPath)) {
+    $logoData = base64_encode(file_get_contents($logoPath));
+    echo '<img src="data:image/jpeg;base64,' . $logoData . '" alt="Company Logo">';
+}
             ?>
         </div>
         <div class="header-info">
-            <div class="company-name">Your Company Name</div>
-            <div>123 Business Avenue, Suite 100</div>
-            <div>New York, NY 10001</div>
-            <div>contact@yourcompany.com | (555) 123-4567</div>
+            <div class="company-name">Om Naad Infotech LLP</div>
+            <div>4, Siddarth Apt</div>
+            <div>Keshav Nager, Ahmedabad, Gujarat - 380027</div>
+            <div>devbhavsar.ds@gmail.com | +(91) 74900-70921</div>
         </div>
         <div class="clear"></div>
     </div>
@@ -286,8 +313,9 @@
             </tr>
         </table>
     </div>
-    
+
     <div class="clear"></div>
 
 </body>
+
 </html>
