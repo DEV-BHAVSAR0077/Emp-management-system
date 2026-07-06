@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Scheduled commands are configured in routes/console.php
+        $schedule->command('reports:send')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
