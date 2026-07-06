@@ -57,7 +57,9 @@
     <div class="container">
         <div class="header">
             @if(file_exists(public_path('images/logo.jpg')))
-                <img src="{{ $message->embed(public_path('images/logo.jpg')) }}" alt="Logo">
+                <a href="#" style="text-decoration: none; border: none; pointer-events: none; cursor: default;">
+                    <img src="{{ $message->embed(public_path('images/logo.jpg')) }}" alt="Logo" style="pointer-events: none; user-select: none;">
+                </a>
             @endif
             <h2>{{ ucfirst($reportData['frequency'] ?? 'Weekly') }} Financial Report</h2>
         </div>
