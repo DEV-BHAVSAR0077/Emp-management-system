@@ -10,4 +10,4 @@ Artisan::command('inspire', function () {
 
 // Schedule the financial reports to check for due users every minute.
 // The command 'reports:send' uses chunks to dispatch jobs for users who are due.
-Schedule::command('reports:send')->everyMinute();
+// Schedule::command('reports:send')->everyMinute();
