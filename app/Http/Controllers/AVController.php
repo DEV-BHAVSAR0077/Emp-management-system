@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgencyVendor;
+use App\Models\VendorLedger;
+use \App\Models\Expense;
+use \App\Models\Payment;
 use App\Http\Requests\AVStoreRequest;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +98,7 @@ class AVController extends Controller implements HasMiddleware
 
     private function getLedgerQuery(Request $request, AgencyVendor $agencyVendor)
     {
-        $query = \App\Models\VendorLedger::where('vendor_id', $agencyVendor->id)
+        $query = VendorLedger::where('vendor_id', $agencyVendor->id)
             ->with('loggable');
 
         if ($request->filled('sort_order') && in_array(strtolower($request->sort_order), ['asc', 'desc'])) {
@@ -118,11 +123,11 @@ class AVController extends Controller implements HasMiddleware
 
     private function formatLedgerItem($item)
     {
-        $date = \Carbon\Carbon::parse($item->log_at);
+        $date = Carbon::parse($item->log_at);
         $typeLabel = '';
-        if ($item->loggable_type === \App\Models\Expense::class) {
+        if ($item->loggable_type === Expense::class) {
             $typeLabel = 'Expense';
-        } elseif ($item->loggable_type === \App\Models\Payment::class) {
+        } elseif ($item->loggable_type === Payment::class) {
             $typeLabel = 'Payment';
         } else {
             $typeLabel = class_basename($item->loggable_type);
@@ -205,7 +210,7 @@ class AVController extends Controller implements HasMiddleware
             return $this->formatLedgerItem($item);
         });
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('agency_vendors.ledger_pdf', [
+        $pdf = Pdf::loadView('agency_vendors.ledger_pdf', [
             'agencyVendor' => $agencyVendor,
             'ledgers' => $formattedLedgers,
             'startDate' => $request->start_date,

@@ -44,19 +44,26 @@
             Payments
         </a>
         @endcan
+        @can('manage-settings')
         <a href="{{ route('settings.index') }}" class="nav-tab-btn {{ $settingsTabActive ?? false ? 'active' : '' }}" id="tab-btn-settings">
             <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
             Settings
         </a>
+        @endcan
     </div>
 
     <div class="nav-right">
-        <span class="nav-user">
-            {{ $user->email }}
-            <span class="role-pill" style="background:{{ $myRoleColor }}20; color:{{ $myRoleColor }}; border:1px solid {{ $myRoleColor }}40;">
-                {{ $user->role }}
+        <a href="{{ route('profile.edit') }}" style="text-decoration: none;">
+            <span class="nav-user">
+                @if(Auth::user()->profile_photo_url)
+                    <img src="{{ Auth::user()->profile_photo_url }}" alt="Profile Photo" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;">
+                @endif
+                {{ $user->email }}
+                <span class="role-pill" style="background:{{ $myRoleColor }}20; color:{{ $myRoleColor }}; border:1px solid {{ $myRoleColor }}40;">
+                    {{ $user->roleInfo->name ?? 'N/A' }}
+                </span>
             </span>
-        </span>
+        </a>
         <form method="POST" action="{{ route('logout') }}" style="display:inline;">
             @csrf
             <button type="submit" id="btn-logout" class="btn-logout">Sign Out</button>

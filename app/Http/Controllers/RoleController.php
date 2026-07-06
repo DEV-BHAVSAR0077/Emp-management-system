@@ -82,12 +82,6 @@ class RoleController extends Controller
             'color' => $request->color,
         ]);
 
-        if ($oldName !== $request->name) {
-            User::where('role', $oldName)->update([
-                'role' => $request->name
-            ]);
-        }
-
         $role->permissions()->sync($request->permissions ?? []);
 
         return redirect()->route('roles.index')
@@ -103,9 +97,10 @@ class RoleController extends Controller
         }
 
         $name     = $role->name;
-        $affected = User::where('role', $role->name)->count();
+        $affected = User::where('role_id', $role->id)->count();
 
-        User::where('role', $role->name)->update(['role' => 'User']);
+        $defaultRoleId = Role::where('name', 'User')->value('id');
+        User::where('role_id', $role->id)->update(['role_id' => $defaultRoleId]);
         $role->delete();
 
         $msg = 'Role "' . $name . '" deleted successfully.';

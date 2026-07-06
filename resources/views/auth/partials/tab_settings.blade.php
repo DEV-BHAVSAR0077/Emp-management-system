@@ -22,13 +22,22 @@
                 <div style="margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
                         <div>
-                            <h3 style="margin: 0 0 5px 0; font-size: 16px;">Weekly Financial Report</h3>
-                            <p style="margin: 0; color: var(--text-muted, #6b7280); font-size: 14px;">Enable or disable the weekly report (Expenses, Payments, Final Amount) sent via email.</p>
+                            <h3 style="margin: 0 0 5px 0; font-size: 16px;">Financial Report</h3>
+                            <p style="margin: 0; color: var(--text-muted, #6b7280); font-size: 14px;">Enable or disable the financial report (Expenses, Payments, Final Amount) sent via email.</p>
                         </div>
                         <label class="switch">
                             <input type="checkbox" name="weekly_report_enabled" {{ isset($settings['weekly_report_enabled']) && $settings['weekly_report_enabled'] == '1' ? 'checked' : '' }}>
                             <span class="slider round"></span>
                         </label>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px;">Report Frequency</label>
+                        <select name="financial_report_frequency" class="form-control" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color, #e5e7eb);">
+                            <option value="daily" {{ (isset($settings['financial_report_frequency']) && $settings['financial_report_frequency'] == 'daily') ? 'selected' : '' }}>Daily</option>
+                            <option value="weekly" {{ (isset($settings['financial_report_frequency']) && $settings['financial_report_frequency'] == 'weekly') || !isset($settings['financial_report_frequency']) ? 'selected' : '' }}>Weekly</option>
+                            <option value="monthly" {{ (isset($settings['financial_report_frequency']) && $settings['financial_report_frequency'] == 'monthly') ? 'selected' : '' }}>Monthly</option>
+                        </select>
                     </div>
                     
                     <div style="border: 1px solid var(--border-color, #e5e7eb); border-radius: 6px; background-color: #f8fafc; overflow: hidden;">

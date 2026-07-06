@@ -3,9 +3,9 @@
 <div id="dashboard-tab" class="tab-content {{ $dashTabActive ? 'active' : '' }}">
     <div class="dash-card">
         <h1>Welcome, {{ $user->name }}! 👋</h1>
-        <p>
+        <p style="margin: 0; color:var(--text-muted);">
             You are logged in as <strong>{{ $user->email }}</strong>.
-            Your current assigned role is <strong>{{ $user->role }}</strong>. You can navigate the tabs above based on your granted permissions.
+            Your current assigned role is <strong>{{ $user->roleInfo->name ?? 'N/A' }}</strong>. You can navigate the tabs above based on your granted permissions.
         </p>
     </div>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">

@@ -8,6 +8,7 @@ use App\Models\AgencyVendor;
 use App\Models\Payment;
 use App\Services\SyncBalance;
 use App\Services\VendorLedgerService;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -172,7 +173,7 @@ class PaymentController extends Controller implements HasMiddleware
 
     public function downloadTemplate()
     {
-        return \Maatwebsite\Excel\Facades\Excel::download(new class implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+        return Excel::download(new class implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
             public function headings(): array {
                 return [
                     'agency_vendor',
@@ -205,7 +206,7 @@ class PaymentController extends Controller implements HasMiddleware
         ]);
 
         try {
-            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\PaymentsImport, $request->file('payment_excel_file'));
+            Excel::import(new \App\Imports\PaymentsImport, $request->file('payment_excel_file'));
             return redirect()->route('payments.index')->with('success', 'Payments imported successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             $messages = [];

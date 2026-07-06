@@ -3,14 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateUserRequest;
-use App\Models\Category;
-use App\Models\Expense;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\AgencyVendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -43,16 +39,17 @@ class UserController extends Controller
     // Store a newly created user.
     public function store(UpdateUserRequest $request)
     {
+        $defaultRoleId = Role::where('name', 'User')->value('id');
         $data = [
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role'     => 'User', // default
+            'role_id'  => $defaultRoleId,
         ];
 
         // Admin / User with edit-role may set role on creation
-        if (Auth::user()->hasPermission('edit-role') && $request->filled('role')) {
-            $data['role'] = $request->role;
+        if (Auth::user()->hasPermission('edit-role') && $request->filled('role_id')) {
+            $data['role_id'] = $request->role_id;
         }
 
         User::create($data);
@@ -107,15 +104,16 @@ class UserController extends Controller
         }
 
         // Only users with edit-role permission can change a user's role
-        if ($authUser->hasPermission('edit-role') && $request->filled('role')) {
+        if ($authUser->hasPermission('edit-role') && $request->filled('role_id')) {
             // Prevent admin from demoting themselves
             if ($user->id === $authUser->id) {
-                if (strtolower($request->role) !== 'admin') {
+                $requestedRole = Role::find($request->role_id);
+                if (!$requestedRole || strtolower($requestedRole->name) !== 'admin') {
                     return redirect()->route('users.index')
                                      ->with('error', 'You cannot remove admin access from your own account.');
                 }
             }
-            $data['role'] = $request->role;
+            $data['role_id'] = $request->role_id;
         }
 
         $user->update($data);

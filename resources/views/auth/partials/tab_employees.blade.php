@@ -62,7 +62,11 @@
                         </td>
                         <td>
                             <div class="user-cell">
-                                <div class="avatar">{{ mb_substr($u->name, 0, 2) }}</div>
+                                @if($u->profile_photo_url)
+                                    <img src="{{ $u->profile_photo_url }}" alt="Profile Photo" class="avatar" style="object-fit: cover; padding: 0;">
+                                @else
+                                    <div class="avatar">{{ mb_substr($u->name, 0, 2) }}</div>
+                                @endif
                                 <div>
                                     <div class="user-name">
                                         {{ $u->name }}
@@ -77,11 +81,11 @@
                         <td>{{ $u->email }}</td>
                         <td>
                             @php
-                                $roleObj   = $rolesMap->get($u->role);
+                                $roleObj   = $u->roleInfo;
                                 $roleColor = $roleObj?->color ?? '#374151';
                             @endphp
                             <span class="badge" style="background:{{ $roleColor }}18; color:{{ $roleColor }}; border:1px solid {{ $roleColor }}35; font-size:12px;">
-                                {{ $u->role }}
+                                {{ $roleObj?->name ?? 'N/A' }}
                             </span>
                         </td>
                         <td style="color:var(--text-muted);">{{ $u->created_at->format('d M Y') }}</td>
